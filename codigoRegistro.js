@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Verificar que todos los elementos existan
     const nameInput = document.getElementById('registerName');
     const emailInput = document.getElementById('registerEmail');
     const phoneInput = document.getElementById('registerPhone');
@@ -7,11 +8,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleIcon = document.getElementById('registerTogglePassword');
     const submitButton = document.getElementById('registerButton');
     const messageElement = document.getElementById('registerMessage');
-    
+
     const reqLength = document.getElementById('reqLength');
     const reqDigit = document.getElementById('reqDigit');
     const reqUppercase = document.getElementById('reqUppercase');
     const reqSpecial = document.getElementById('reqSpecial');
+
+    // Verificar que todos los elementos críticos existan
+    if (!passwordInput || !reqLength || !reqDigit || !reqUppercase || !reqSpecial) {
+        console.error('Elementos críticos no encontrados:', {
+            passwordInput: !!passwordInput,
+            reqLength: !!reqLength,
+            reqDigit: !!reqDigit,
+            reqUppercase: !!reqUppercase,
+            reqSpecial: !!reqSpecial
+        });
+        return;
+    }
+
+    console.log('Todos los elementos encontrados correctamente');
 
     // Validar nombre
     const validateName = () => {
@@ -28,7 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const validatePassword = () => {
         const password = passwordInput.value;
+        console.log('Validando contraseña:', password); // Debug
         let allValid = true;
+
+        // Verificar que los elementos existan
+        if (!reqLength || !reqDigit || !reqUppercase || !reqSpecial) {
+            console.error('Elementos de validación no encontrados');
+            return false;
+        }
 
         const lengthValid = password.length >= 8;
         updateRequirement(reqLength, lengthValid, "8 o más caracteres");
@@ -45,7 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const specialValid = /[?@/!#$%&*]/.test(password);
         updateRequirement(reqSpecial, specialValid, "Mínimo un (1) carácter especial (? @ / ! # $ % & *)");
         if (!specialValid) allValid = false;
-        
+
+        console.log('Validación completa:', { lengthValid, digitValid, uppercaseValid, specialValid, allValid }); // Debug
         return allValid;
     };
 
@@ -53,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nameValid = validateName();
         const emailValid = validateEmail();
         const passwordValid = validatePassword();
-        
+
         if (nameValid && emailValid && passwordValid) {
             submitButton.disabled = false;
             submitButton.style.opacity = '1';
@@ -62,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             submitButton.disabled = true;
             submitButton.style.opacity = '0.6';
-            
+
             if (!nameValid && nameInput.value.trim()) {
                 messageElement.textContent = '❌ El nombre debe tener al menos 2 caracteres.';
                 messageElement.style.color = '#e74c3c';
@@ -74,31 +97,58 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-    
+
     const updateRequirement = (element, isValid, text) => {
+        if (!element) {
+            console.error('Elemento no encontrado para actualizar requisito');
+            return;
+        }
+
         if (isValid) {
             element.classList.remove('invalid');
             element.classList.add('valid');
             element.innerHTML = `✔️ ${text}`;
+            element.style.color = '#27ae60';
         } else {
             element.classList.remove('valid');
             element.classList.add('invalid');
             element.innerHTML = `❌ ${text}`;
+            element.style.color = '#e74c3c';
         }
     };
-    
+
     // Toggle para mostrar/ocultar contraseña
     toggleIcon.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
-        toggleIcon.textContent = type === 'password' ? '👁️' : '🔒'; 
+        toggleIcon.textContent = type === 'password' ? '👁️' : '🔒';
     });
-    
+
     // Event listeners para validación en tiempo real
     nameInput.addEventListener('input', validateForm);
     emailInput.addEventListener('input', validateForm);
-    passwordInput.addEventListener('input', validateForm);
-    
+
+    // Event listener específico para contraseña con múltiples eventos
+    passwordInput.addEventListener('input', () => {
+        console.log('Input event en contraseña'); // Debug
+        validatePassword();
+        validateForm();
+    });
+
+    passwordInput.addEventListener('keyup', () => {
+        console.log('Keyup event en contraseña'); // Debug
+        validatePassword();
+        validateForm();
+    });
+
+    passwordInput.addEventListener('paste', () => {
+        setTimeout(() => {
+            console.log('Paste event en contraseña'); // Debug
+            validatePassword();
+            validateForm();
+        }, 10);
+    });
+
     // Función global para validación externa
     window.validateRegistrationPassword = () => {
         return validatePassword();
@@ -107,25 +157,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Manejo del envío del formulario
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const name = nameInput.value.trim();
         const email = emailInput.value.trim();
         const phone = phoneInput.value.trim();
         const address = addressInput.value.trim();
         const password = passwordInput.value;
-        
+
         if (!validateName()) {
             messageElement.textContent = '❌ El nombre debe tener al menos 2 caracteres.';
             messageElement.style.color = '#e74c3c';
             return;
         }
-        
+
         if (!validateEmail()) {
             messageElement.textContent = '❌ Ingresa un correo electrónico válido.';
             messageElement.style.color = '#e74c3c';
             return;
         }
-        
+
         if (!validatePassword()) {
             messageElement.textContent = '❌ La contraseña no cumple todos los requisitos.';
             messageElement.style.color = '#e74c3c';
@@ -163,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Registro exitoso
                 messageElement.textContent = '🎉 ¡Registro exitoso! Usuario guardado en la base de datos. Redirigiendo...';
                 messageElement.style.color = '#27ae60';
-                
+
                 // Guardar también en localStorage como respaldo
                 const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
                 users.push({
@@ -175,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     registeredAt: new Date().toISOString()
                 });
                 localStorage.setItem('registeredUsers', JSON.stringify(users));
-                
+
                 // Redirigir después de 2 segundos
                 setTimeout(() => {
                     window.location.href = 'index.html';
@@ -188,20 +238,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     messageElement.textContent = `❌ Error: ${result.error}`;
                 }
                 messageElement.style.color = '#e74c3c';
-                
+
                 // Rehabilitar botón
                 submitButton.disabled = false;
                 submitButton.textContent = '🎉 Registrar Cuenta 🎉';
             }
         } catch (error) {
             console.error('Error de conexión:', error);
-            
+
             // Fallback a localStorage si no hay conexión
             messageElement.textContent = '⚠️ Sin conexión al servidor. Guardando localmente...';
             messageElement.style.color = '#f39c12';
-            
+
             const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-            
+
             // Verificar si el usuario ya existe localmente
             if (users.find(user => user.email === email)) {
                 messageElement.textContent = '❌ Este correo ya está registrado localmente.';
@@ -210,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitButton.textContent = '🎉 Registrar Cuenta 🎉';
                 return;
             }
-            
+
             // Guardar localmente
             users.push({
                 nombre: name,
@@ -221,12 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 registeredAt: new Date().toISOString(),
                 syncPending: true // Marcar para sincronizar después
             });
-            
+
             localStorage.setItem('registeredUsers', JSON.stringify(users));
-            
+
             messageElement.textContent = '✅ Usuario guardado localmente. Se sincronizará cuando haya conexión.';
             messageElement.style.color = '#27ae60';
-            
+
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 2000);
@@ -234,18 +284,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Validación inicial
+    console.log('Ejecutando validación inicial');
+    validatePassword(); // Validar contraseña inicialmente
     validateForm();
+
+    // Forzar actualización visual inicial
+    setTimeout(() => {
+        validatePassword();
+    }, 100);
 });
-// Fu
-nción para sincronizar usuarios pendientes
+
 async function syncPendingUsers() {
     const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     const pendingUsers = users.filter(user => user.syncPending);
-    
+
     if (pendingUsers.length === 0) return;
-    
+
     console.log(`Sincronizando ${pendingUsers.length} usuarios pendientes...`);
-    
+
     for (const user of pendingUsers) {
         try {
             const userData = {
@@ -274,7 +330,7 @@ async function syncPendingUsers() {
             console.log(`Error sincronizando usuario ${user.email}:`, error);
         }
     }
-    
+
     // Actualizar localStorage
     localStorage.setItem('registeredUsers', JSON.stringify(users));
 }

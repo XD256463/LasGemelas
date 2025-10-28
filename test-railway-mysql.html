@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test MySQL Railway - Las Gemelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .test-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status-success { color: #27ae60; font-weight: bold; }
+        .status-error { color: #e74c3c; font-weight: bold; }
+        .status-loading { color: #3498db; font-weight: bold; }
+        .status-warning { color: #f39c12; font-weight: bold; }
+        .test-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        .json-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .connection-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-container">
+            <h2 class="text-center mb-4">🐬 Test MySQL Railway - Las Gemelas</h2>
+            
+            <div class="connection-info">
+                <h5>📋 Información de Conexión MySQL</h5>
+                <ul class="mb-0">
+                    <li><strong>Host:</strong> gondola.proxy.rlwy.net</li>
+                    <li><strong>Puerto:</strong> 29190</li>
+                    <li><strong>Usuario:</strong> root</li>
+                    <li><strong>Base de Datos:</strong> railway</li>
+                    <li><strong>SSL:</strong> Habilitado</li>
+                </ul>
+            </div>
+            
+            <!-- Test 1: Health Check -->
+            <div class="test-section">
+                <h5>1. 🏥 Health Check del Servidor</h5>
+                <p id="healthStatus" class="status-loading">⏳ Listo para probar...</p>
+                <button class="btn btn-primary btn-sm" onclick="testHealth()">🔄 Probar Health</button>
+                <div id="healthDetails" class="json-output" style="display: none;"></div>
+            </div>
+            
+            <!-- Test 2: Conexión MySQL -->
+            <div class="test-section">
+                <h5>2. 🔌 Conexión MySQL Railway</h5>
+                <p id="mysqlStatus" class="status-loading">⏳ Listo para probar...</p>
+                <button class="btn btn-info btn-sm" onclick="testMySQLConnection()">🐬 Probar MySQL</button>
+                <div id="mysqlDetails" class="json-output" style="display: none;"></div>
+            </div>
+            
+            <!-- Test 3: Verificar Tablas -->
+            <div class="test-section">
+                <h5>3. 📊 Verificar Tablas Existentes</h5>
+                <p id="tablesStatus" class="status-loading">⏳ Listo para probar...</p>
+                <button class="btn btn-secondary btn-sm" onclick="testTables()">📋 Ver Tablas</button>
+                <div id="tablesDetails" class="json-output" style="display: none;"></div>
+            </div>
+            
+            <!-- Test 4: Registro de Usuario -->
+            <div class="test-section">
+                <h5>4. 👤 Registro de Usuario de Prueba</h5>
+                <p id="registerStatus" class="status-loading">⏳ Listo para probar...</p>
+                <button class="btn btn-success btn-sm" onclick="testUserRegistration()">✍️ Probar Registro</button>
+                <div id="registerDetails" class="json-output" style="display: none;"></div>
+            </div>
+            
+            <!-- Test 5: Login -->
+            <div class="test-section">
+                <h5>5. 🔐 Login de Usuario</h5>
+                <p id="loginStatus" class="status-loading">⏳ Primero ejecuta el registro...</p>
+                <button class="btn btn-warning btn-sm" onclick="testUserLogin()" id="loginBtn" disabled>🔑 Probar Login</button>
+                <div id="loginDetails" class="json-output" style="display: none;"></div>
+            </div>
+            
+            <!-- Resumen -->
+            <div class="test-section">
+                <h5>📈 Resumen de Pruebas</h5>
+                <div id="testSummary">
+                    <p class="status-loading">Ejecuta las pruebas para ver el resumen</p>
+                </div>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="text-center mt-4">
+                <button class="btn btn-primary btn-lg me-2" onclick="runAllTests()">🚀 Ejecutar Todas las Pruebas</button>
+                <button class="btn btn-secondary me-2" onclick="clearAllResults()">🗑️ Limpiar</button>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <a href="registro.html" class="btn btn-outline-primary me-2">📝 Ir al Registro</a>
+                <a href="test-simple.html" class="btn btn-outline-info me-2">🧪 Test Simple</a>
+                <a href="index.html" class="btn btn-outline-secondary">🏠 Inicio</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            health: false,
+            mysql: false,
+            tables: false,
+            register: false,
+            login: false
+        };
+        
+        let testUser = null;
+
+        async function testHealth() {
+            const statusEl = document.getElementById('healthStatus');
+            const detailsEl = document.getElementById('healthDetails');
+            
+            statusEl.textContent = '⏳ Probando health check...';
+            statusEl.className = 'status-loading';
+            
+            try {
+                const response = await fetch('/health');
+                const result = await response.json();
+                
+                detailsEl.textContent = JSON.stringify(result, null, 2);
+                detailsEl.style.display = 'block';
+                
+                if (response.ok) {
+                    statusEl.textContent = '✅ Servidor funcionando correctamente';
+                    statusEl.className = 'status-success';
+                    testResults.health = true;
+                } else {
+                    statusEl.textContent = '❌ Error en health check';
+                    statusEl.className = 'status-error';
+                }
+            } catch (error) {
+                statusEl.textContent = `❌ Error de conexión: ${error.message}`;
+                statusEl.className = 'status-error';
+                detailsEl.textContent = error.stack;
+                detailsEl.style.display = 'block';
+            }
+            updateSummary();
+        }
+
+        async function testMySQLConnection() {
+            const statusEl = document.getElementById('mysqlStatus');
+            const detailsEl = document.getElementById('mysqlDetails');
+            
+            statusEl.textContent = '⏳ Probando conexión MySQL...';
+            statusEl.className = 'status-loading';
+            
+            try {
+                const response = await fetch('/api/test-connection');
+                const result = await response.json();
+                
+                detailsEl.textContent = JSON.stringify(result, null, 2);
+                detailsEl.style.display = 'block';
+                
+                if (response.ok && result.success) {
+                    statusEl.textContent = '✅ Conexión MySQL exitosa';
+                    statusEl.className = 'status-success';
+                    testResults.mysql = true;
+                } else {
+                    statusEl.textContent = `❌ Error MySQL: ${result.error || 'Desconocido'}`;
+                    statusEl.className = 'status-error';
+                }
+            } catch (error) {
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'status-error';
+                detailsEl.textContent = error.stack;
+                detailsEl.style.display = 'block';
+            }
+            updateSummary();
+        }
+
+        async function testTables() {
+            const statusEl = document.getElementById('tablesStatus');
+            const detailsEl = document.getElementById('tablesDetails');
+            
+            statusEl.textContent = '⏳ Verificando tablas...';
+            statusEl.className = 'status-loading';
+            
+            try {
+                // Usar el endpoint de test-db que ya existe
+                const response = await fetch('/api/test-db');
+                const result = await response.json();
+                
+                detailsEl.textContent = JSON.stringify(result, null, 2);
+                detailsEl.style.display = 'block';
+                
+                if (response.ok) {
+                    statusEl.textContent = `✅ Tablas verificadas - Usuarios: ${result.tablaUsuarios || 'desconocido'}`;
+                    statusEl.className = 'status-success';
+                    testResults.tables = true;
+                } else {
+                    statusEl.textContent = `❌ Error verificando tablas: ${result.error}`;
+                    statusEl.className = 'status-error';
+                }
+            } catch (error) {
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'status-error';
+                detailsEl.textContent = error.stack;
+                detailsEl.style.display = 'block';
+            }
+            updateSummary();
+        }
+
+        async function testUserRegistration() {
+            const statusEl = document.getElementById('registerStatus');
+            const detailsEl = document.getElementById('registerDetails');
+            
+            statusEl.textContent = '⏳ Probando registro de usuario...';
+            statusEl.className = 'status-loading';
+            
+            testUser = {
+                nombre: 'Usuario Test Railway',
+                email: `test_railway_${Date.now()}@lasgemelas.com`,
+                password: 'TestRailway123!',
+                telefono: '+57 300 123 4567',
+                direccion: 'Dirección de prueba Railway'
+            };
+            
+            try {
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testUser)
+                });
+                
+                const result = await response.json();
+                
+                detailsEl.textContent = JSON.stringify({
+                    request: testUser,
+                    response: result,
+                    status: response.status
+                }, null, 2);
+                detailsEl.style.display = 'block';
+                
+                if (response.ok && result.success) {
+                    statusEl.textContent = `✅ Usuario registrado exitosamente (ID: ${result.userId})`;
+                    statusEl.className = 'status-success';
+                    testResults.register = true;
+                    
+                    // Habilitar botón de login
+                    document.getElementById('loginBtn').disabled = false;
+                    document.getElementById('loginStatus').textContent = '⏳ Listo para probar login...';
+                } else {
+                    statusEl.textContent = `❌ Error en registro: ${result.error || 'Desconocido'}`;
+                    statusEl.className = 'status-error';
+                }
+            } catch (error) {
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'status-error';
+                detailsEl.textContent = error.stack;
+                detailsEl.style.display = 'block';
+            }
+            updateSummary();
+        }
+
+        async function testUserLogin() {
+            if (!testUser) {
+                alert('Primero ejecuta el test de registro');
+                return;
+            }
+            
+            const statusEl = document.getElementById('loginStatus');
+            const detailsEl = document.getElementById('loginDetails');
+            
+            statusEl.textContent = '⏳ Probando login...';
+            statusEl.className = 'status-loading';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: testUser.email,
+                        password: testUser.password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                detailsEl.textContent = JSON.stringify(result, null, 2);
+                detailsEl.style.display = 'block';
+                
+                if (response.ok && result.success) {
+                    statusEl.textContent = '✅ Login exitoso';
+                    statusEl.className = 'status-success';
+                    testResults.login = true;
+                } else {
+                    statusEl.textContent = `❌ Error en login: ${result.error || 'Desconocido'}`;
+                    statusEl.className = 'status-error';
+                }
+            } catch (error) {
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'status-error';
+                detailsEl.textContent = error.stack;
+                detailsEl.style.display = 'block';
+            }
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summaryEl = document.getElementById('testSummary');
+            const passed = Object.values(testResults).filter(Boolean).length;
+            const total = Object.keys(testResults).length;
+            
+            let html = `<p><strong>Pruebas completadas: ${passed}/${total}</strong></p>`;
+            html += '<ul class="list-unstyled">';
+            html += `<li>${testResults.health ? '✅' : '❌'} Health Check</li>`;
+            html += `<li>${testResults.mysql ? '✅' : '❌'} Conexión MySQL</li>`;
+            html += `<li>${testResults.tables ? '✅' : '❌'} Verificación de Tablas</li>`;
+            html += `<li>${testResults.register ? '✅' : '❌'} Registro de Usuario</li>`;
+            html += `<li>${testResults.login ? '✅' : '❌'} Login de Usuario</li>`;
+            html += '</ul>';
+            
+            if (passed === total) {
+                html += '<p class="status-success">🎉 ¡Todos los tests pasaron! Sistema completamente funcional.</p>';
+            } else if (passed > 0) {
+                html += '<p class="status-warning">⚠️ Algunos tests fallaron. Revisa los detalles arriba.</p>';
+            } else {
+                html += '<p class="status-error">❌ Todos los tests fallaron. Verifica la configuración.</p>';
+            }
+            
+            summaryEl.innerHTML = html;
+        }
+
+        async function runAllTests() {
+            await testHealth();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testMySQLConnection();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testTables();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testUserRegistration();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testUserLogin();
+        }
+
+        function clearAllResults() {
+            testResults = { health: false, mysql: false, tables: false, register: false, login: false };
+            testUser = null;
+            
+            // Limpiar estados
+            document.getElementById('healthStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('mysqlStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('tablesStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('registerStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('loginStatus').textContent = '⏳ Primero ejecuta el registro...';
+            
+            // Ocultar detalles
+            ['healthDetails', 'mysqlDetails', 'tablesDetails', 'registerDetails', 'loginDetails'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            
+            // Deshabilitar login
+            document.getElementById('loginBtn').disabled = true;
+            
+            updateSummary();
+        }
+
+        // Ejecutar health check al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(testHealth, 1000);
+        });
+    </script>
+</body>
+</html>

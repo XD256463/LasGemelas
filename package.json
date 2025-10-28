@@ -7,7 +7,8 @@
     "start": "node server-clean.js",
     "dev": "nodemon server-clean.js",
     "build": "echo 'No build step required'",
-    "start-old": "node server.js"
+    "start-old": "node server.js",
+    "test-mysql": "node test-mysql-connection.js"
   },
   "dependencies": {
     "express": "^4.18.2",

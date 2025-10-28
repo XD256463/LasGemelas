@@ -124,8 +124,28 @@ const verifyToken = (req, res, next) => {
 // Rutas de autenticación
 app.post('/api/registro', async (req, res) => {
     try {
+        console.log('Datos recibidos para registro:', req.body);
+        
         const { nombre, email, password, telefono, direccion } = req.body;
 
+        // Validar datos requeridos
+        if (!nombre || !email || !password) {
+            console.log('Datos faltantes:', { nombre: !!nombre, email: !!email, password: !!password });
+            return res.status(400).json({ 
+                error: 'Nombre, email y contraseña son requeridos' 
+            });
+        }
+
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ 
+                error: 'Formato de email inválido' 
+            });
+        }
+
+        console.log('Verificando si el usuario existe...');
+        
         // Verificar si el usuario ya existe
         const [existingUser] = await pool.execute(
             'SELECT id FROM usuarios WHERE email = ?',
@@ -133,25 +153,126 @@ app.post('/api/registro', async (req, res) => {
         );
 
         if (existingUser.length > 0) {
+            console.log('Usuario ya existe:', email);
             return res.status(400).json({ error: 'El usuario ya existe' });
         }
 
+        console.log('Encriptando contraseña...');
+        
         // Encriptar contraseña
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        console.log('Insertando usuario en la base de datos...');
+        
         // Insertar usuario
         const [result] = await pool.execute(
             'INSERT INTO usuarios (nombre, email, password, telefono, direccion) VALUES (?, ?, ?, ?, ?)',
-            [nombre, email, hashedPassword, telefono, direccion]
+            [nombre, email, hashedPassword, telefono || null, direccion || null]
         );
+
+        console.log('Usuario registrado exitosamente:', result.insertId);
 
         res.status(201).json({
             message: 'Usuario registrado exitosamente',
             userId: result.insertId
         });
     } catch (error) {
-        console.error('Error en registro:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        console.error('Error detallado en registro:', {
+            message: error.message,
+            code: error.code,
+            errno: error.errno,
+            sqlState: error.sqlState,
+            sqlMessage: error.sqlMessage,
+            stack: error.stack
+        });
+        
+        // Enviar error más específico según el tipo
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: 'El email ya está registrado' });
+        } else if (error.code === 'ECONNREFUSED') {
+            return res.status(500).json({ error: 'No se puede conectar a la base de datos' });
+        } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+            return res.status(500).json({ error: 'Error de autenticación con la base de datos' });
+        } else {
+            return res.status(500).json({ 
+                error: 'Error interno del servidor',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+    }
+});
+
+// Endpoint de registro simplificado para pruebas
+app.post('/api/registro-simple', async (req, res) => {
+    try {
+        console.log('=== REGISTRO SIMPLE - INICIO ===');
+        console.log('Body recibido:', JSON.stringify(req.body, null, 2));
+        
+        const { nombre, email, password } = req.body;
+        
+        // Validaciones básicas
+        if (!nombre) {
+            return res.status(400).json({ error: 'Nombre es requerido' });
+        }
+        if (!email) {
+            return res.status(400).json({ error: 'Email es requerido' });
+        }
+        if (!password) {
+            return res.status(400).json({ error: 'Password es requerido' });
+        }
+        
+        console.log('Datos validados:', { nombre, email, passwordLength: password.length });
+        
+        // Probar conexión
+        console.log('Obteniendo conexión...');
+        const connection = await pool.getConnection();
+        console.log('Conexión obtenida exitosamente');
+        
+        // Verificar si usuario existe
+        console.log('Verificando si usuario existe...');
+        const [existing] = await connection.execute(
+            'SELECT id FROM usuarios WHERE email = ?',
+            [email]
+        );
+        console.log('Usuarios existentes con este email:', existing.length);
+        
+        if (existing.length > 0) {
+            connection.release();
+            return res.status(400).json({ error: 'Usuario ya existe' });
+        }
+        
+        // Encriptar password
+        console.log('Encriptando password...');
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('Password encriptado exitosamente');
+        
+        // Insertar usuario con valores mínimos
+        console.log('Insertando usuario...');
+        const [result] = await connection.execute(
+            'INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)',
+            [nombre, email, hashedPassword]
+        );
+        console.log('Usuario insertado con ID:', result.insertId);
+        
+        connection.release();
+        console.log('=== REGISTRO SIMPLE - ÉXITO ===');
+        
+        res.status(201).json({
+            message: 'Usuario registrado exitosamente',
+            userId: result.insertId
+        });
+        
+    } catch (error) {
+        console.error('=== REGISTRO SIMPLE - ERROR ===');
+        console.error('Error completo:', error);
+        console.error('Stack:', error.stack);
+        
+        res.status(500).json({
+            error: 'Error interno del servidor',
+            message: error.message,
+            code: error.code,
+            errno: error.errno
+        });
     }
 });
 
@@ -296,13 +417,87 @@ app.get('/api/pedidos', verifyToken, async (req, res) => {
 // Ruta de prueba de conexión
 app.get('/api/test-db', async (req, res) => {
     try {
+        console.log('Probando conexión a la base de datos...');
         const connection = await pool.getConnection();
-        await connection.execute('SELECT 1');
+        
+        // Probar consulta simple
+        await connection.execute('SELECT 1 as test');
+        
+        // Verificar que la tabla usuarios existe
+        const [tables] = await connection.execute('SHOW TABLES LIKE "usuarios"');
+        
+        // Obtener información de la tabla usuarios
+        let tableInfo = null;
+        if (tables.length > 0) {
+            const [columns] = await connection.execute('DESCRIBE usuarios');
+            tableInfo = columns;
+        }
+        
         connection.release();
-        res.json({ message: 'Conexión a la base de datos exitosa' });
+        
+        res.json({ 
+            message: 'Conexión a la base de datos exitosa',
+            database: process.env.DB_NAME || 'railway',
+            host: process.env.DB_HOST || 'gondola.proxy.rlwy.net',
+            tablaUsuarios: tables.length > 0 ? 'existe' : 'no existe',
+            columnas: tableInfo
+        });
     } catch (error) {
-        console.error('Error de conexión:', error);
-        res.status(500).json({ error: 'Error de conexión a la base de datos' });
+        console.error('Error de conexión detallado:', {
+            message: error.message,
+            code: error.code,
+            errno: error.errno,
+            sqlState: error.sqlState
+        });
+        res.status(500).json({ 
+            error: 'Error de conexión a la base de datos',
+            details: error.message,
+            code: error.code
+        });
+    }
+});
+
+// Endpoint para verificar variables de entorno
+app.get('/api/debug-env', (req, res) => {
+    res.json({
+        NODE_ENV: process.env.NODE_ENV,
+        DB_HOST: process.env.DB_HOST ? 'configurado' : 'no configurado',
+        DB_PORT: process.env.DB_PORT ? 'configurado' : 'no configurado',
+        DB_USER: process.env.DB_USER ? 'configurado' : 'no configurado',
+        DB_PASSWORD: process.env.DB_PASSWORD ? 'configurado' : 'no configurado',
+        DB_NAME: process.env.DB_NAME ? 'configurado' : 'no configurado',
+        JWT_SECRET: process.env.JWT_SECRET ? 'configurado' : 'no configurado',
+        PORT: process.env.PORT || 3000
+    });
+});
+
+// Endpoint para verificar estructura de tabla usuarios
+app.get('/api/debug-usuarios', async (req, res) => {
+    try {
+        const connection = await pool.getConnection();
+        
+        // Obtener estructura de la tabla
+        const [structure] = await connection.execute('DESCRIBE usuarios');
+        
+        // Contar usuarios existentes
+        const [count] = await connection.execute('SELECT COUNT(*) as total FROM usuarios');
+        
+        // Obtener algunos usuarios de ejemplo (sin contraseñas)
+        const [samples] = await connection.execute('SELECT id, nombre, email, telefono, direccion, fecha_registro FROM usuarios LIMIT 3');
+        
+        connection.release();
+        
+        res.json({
+            estructura: structure,
+            totalUsuarios: count[0].total,
+            ejemplos: samples
+        });
+    } catch (error) {
+        console.error('Error verificando tabla usuarios:', error);
+        res.status(500).json({ 
+            error: 'Error verificando tabla usuarios',
+            details: error.message 
+        });
     }
 });
 

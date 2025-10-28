@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico del Sistema - Las Gemelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .diagnostic-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status-success { color: #27ae60; }
+        .status-error { color: #e74c3c; }
+        .status-loading { color: #3498db; }
+        .status-warning { color: #f39c12; }
+        .test-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .json-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="diagnostic-container">
+            <h2 class="text-center mb-4">🔧 Diagnóstico Completo del Sistema</h2>
+            
+            <!-- Test 1: Servidor -->
+            <div class="test-section">
+                <h5>1. Estado del Servidor</h5>
+                <p id="serverStatus" class="status-loading">⏳ Verificando servidor...</p>
+                <button class="btn btn-sm btn-primary" onclick="testServer()">🔄 Probar Servidor</button>
+            </div>
+            
+            <!-- Test 2: Variables de Entorno -->
+            <div class="test-section">
+                <h5>2. Variables de Entorno</h5>
+                <p id="envStatus" class="status-loading">⏳ Verificando variables...</p>
+                <button class="btn btn-sm btn-primary" onclick="testEnvironment()">🔄 Verificar Variables</button>
+                <div id="envDetails" class="json-output mt-2" style="display: none;"></div>
+            </div>
+            
+            <!-- Test 3: Base de Datos -->
+            <div class="test-section">
+                <h5>3. Conexión a Base de Datos</h5>
+                <p id="dbStatus" class="status-loading">⏳ Probando conexión...</p>
+                <button class="btn btn-sm btn-primary" onclick="testDatabase()">🔄 Probar BD</button>
+                <div id="dbDetails" class="json-output mt-2" style="display: none;"></div>
+            </div>
+            
+            <!-- Test 4: Estructura de Tabla Usuarios -->
+            <div class="test-section">
+                <h5>4. Estructura de Tabla Usuarios</h5>
+                <p id="tableStatus" class="status-loading">⏳ Listo para probar...</p>
+                <button class="btn btn-sm btn-info" onclick="testTableStructure()">🔍 Verificar Tabla</button>
+                <div id="tableDetails" class="json-output mt-2" style="display: none;"></div>
+            </div>
+
+            <!-- Test 5: Registro Simple -->
+            <div class="test-section">
+                <h5>5. Registro Simple de Prueba</h5>
+                <p id="simpleRegisterStatus" class="status-loading">⏳ Listo para probar...</p>
+                <button class="btn btn-sm btn-success" onclick="testSimpleRegistration()">🧪 Probar Registro Simple</button>
+                <div id="simpleRegisterDetails" class="json-output mt-2" style="display: none;"></div>
+            </div>
+            
+            <!-- Test 6: Registro Completo -->
+            <div class="test-section">
+                <h5>6. Registro Completo de Prueba</h5>
+                <p id="registerStatus" class="status-loading">⏳ Listo para probar...</p>
+                <button class="btn btn-sm btn-success" onclick="testRegistration()">🧪 Probar Registro Completo</button>
+                <div id="registerDetails" class="json-output mt-2" style="display: none;"></div>
+            </div>
+            
+            <!-- Resumen -->
+            <div class="test-section">
+                <h5>📊 Resumen del Sistema</h5>
+                <div id="systemSummary">
+                    <p class="status-loading">Ejecuta las pruebas para ver el resumen</p>
+                </div>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="text-center mt-4">
+                <button class="btn btn-primary me-2" onclick="runAllTests()">🚀 Ejecutar Todas las Pruebas</button>
+                <button class="btn btn-secondary me-2" onclick="clearResults()">🗑️ Limpiar Resultados</button>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <a href="registro.html" class="btn btn-outline-primary me-2">📝 Ir al Registro</a>
+                <a href="test-db.html" class="btn btn-outline-info me-2">🔍 Test BD Simple</a>
+                <a href="index.html" class="btn btn-outline-secondary">🏠 Inicio</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            server: false,
+            environment: false,
+            database: false,
+            tableStructure: false,
+            simpleRegistration: false,
+            registration: false
+        };
+
+        async function testServer() {
+            const statusElement = document.getElementById('serverStatus');
+            statusElement.textContent = '⏳ Probando servidor...';
+            statusElement.className = 'status-loading';
+            
+            try {
+                const response = await fetch('/health');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    statusElement.textContent = '✅ Servidor funcionando correctamente';
+                    statusElement.className = 'status-success';
+                    testResults.server = true;
+                } else {
+                    statusElement.textContent = '❌ Servidor respondió con error';
+                    statusElement.className = 'status-error';
+                }
+            } catch (error) {
+                statusElement.textContent = `❌ Error de conexión: ${error.message}`;
+                statusElement.className = 'status-error';
+            }
+            updateSummary();
+        }
+
+        async function testEnvironment() {
+            const statusElement = document.getElementById('envStatus');
+            const detailsElement = document.getElementById('envDetails');
+            
+            statusElement.textContent = '⏳ Verificando variables...';
+            statusElement.className = 'status-loading';
+            
+            try {
+                const response = await fetch('/api/debug-env');
+                const result = await response.json();
+                
+                detailsElement.textContent = JSON.stringify(result, null, 2);
+                detailsElement.style.display = 'block';
+                
+                const allConfigured = Object.values(result).every(val => 
+                    val === 'configurado' || typeof val === 'number' || val === 'development' || val === 'production'
+                );
+                
+                if (allConfigured) {
+                    statusElement.textContent = '✅ Todas las variables configuradas';
+                    statusElement.className = 'status-success';
+                    testResults.environment = true;
+                } else {
+                    statusElement.textContent = '⚠️ Algunas variables no configuradas';
+                    statusElement.className = 'status-warning';
+                }
+            } catch (error) {
+                statusElement.textContent = `❌ Error verificando variables: ${error.message}`;
+                statusElement.className = 'status-error';
+            }
+            updateSummary();
+        }
+
+        async function testDatabase() {
+            const statusElement = document.getElementById('dbStatus');
+            const detailsElement = document.getElementById('dbDetails');
+            
+            statusElement.textContent = '⏳ Probando conexión...';
+            statusElement.className = 'status-loading';
+            
+            try {
+                const response = await fetch('/api/test-db');
+                const result = await response.json();
+                
+                detailsElement.textContent = JSON.stringify(result, null, 2);
+                detailsElement.style.display = 'block';
+                
+                if (response.ok && result.tablaUsuarios === 'existe') {
+                    statusElement.textContent = '✅ Base de datos conectada y tabla usuarios existe';
+                    statusElement.className = 'status-success';
+                    testResults.database = true;
+                } else if (response.ok) {
+                    statusElement.textContent = '⚠️ Conectado pero tabla usuarios no existe';
+                    statusElement.className = 'status-warning';
+                } else {
+                    statusElement.textContent = `❌ Error de BD: ${result.error}`;
+                    statusElement.className = 'status-error';
+                }
+            } catch (error) {
+                statusElement.textContent = `❌ Error de conexión BD: ${error.message}`;
+                statusElement.className = 'status-error';
+            }
+            updateSummary();
+        }
+
+        async function testTableStructure() {
+            const statusElement = document.getElementById('tableStatus');
+            const detailsElement = document.getElementById('tableDetails');
+            
+            statusElement.textContent = '⏳ Verificando estructura...';
+            statusElement.className = 'status-loading';
+            
+            try {
+                const response = await fetch('/api/debug-usuarios');
+                const result = await response.json();
+                
+                detailsElement.textContent = JSON.stringify(result, null, 2);
+                detailsElement.style.display = 'block';
+                
+                if (response.ok && result.estructura) {
+                    statusElement.textContent = `✅ Tabla usuarios OK (${result.totalUsuarios} usuarios)`;
+                    statusElement.className = 'status-success';
+                    testResults.tableStructure = true;
+                } else {
+                    statusElement.textContent = `❌ Error verificando tabla: ${result.error}`;
+                    statusElement.className = 'status-error';
+                }
+            } catch (error) {
+                statusElement.textContent = `❌ Error: ${error.message}`;
+                statusElement.className = 'status-error';
+            }
+            updateSummary();
+        }
+
+        async function testSimpleRegistration() {
+            const statusElement = document.getElementById('simpleRegisterStatus');
+            const detailsElement = document.getElementById('simpleRegisterDetails');
+            
+            statusElement.textContent = '⏳ Probando registro simple...';
+            statusElement.className = 'status-loading';
+            
+            const testUser = {
+                nombre: 'Test Simple',
+                email: `simple_${Date.now()}@test.com`,
+                password: 'Test123!'
+            };
+            
+            try {
+                const response = await fetch('/api/registro-simple', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testUser)
+                });
+                
+                const result = await response.json();
+                
+                detailsElement.textContent = JSON.stringify({
+                    request: testUser,
+                    response: result,
+                    status: response.status
+                }, null, 2);
+                detailsElement.style.display = 'block';
+                
+                if (response.ok) {
+                    statusElement.textContent = '✅ Registro simple funcionando';
+                    statusElement.className = 'status-success';
+                    testResults.simpleRegistration = true;
+                } else {
+                    statusElement.textContent = `❌ Error registro simple: ${result.error}`;
+                    statusElement.className = 'status-error';
+                }
+            } catch (error) {
+                statusElement.textContent = `❌ Error: ${error.message}`;
+                statusElement.className = 'status-error';
+            }
+            updateSummary();
+        }
+
+        async function testRegistration() {
+            const statusElement = document.getElementById('registerStatus');
+            const detailsElement = document.getElementById('registerDetails');
+            
+            statusElement.textContent = '⏳ Probando registro...';
+            statusElement.className = 'status-loading';
+            
+            const testUser = {
+                nombre: 'Usuario Prueba',
+                email: `test_${Date.now()}@lasgemelas.com`,
+                password: 'TestPassword123!',
+                telefono: '+57 300 123 4567',
+                direccion: 'Dirección de prueba 123'
+            };
+            
+            try {
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testUser)
+                });
+                
+                const result = await response.json();
+                
+                detailsElement.textContent = JSON.stringify({
+                    request: testUser,
+                    response: result,
+                    status: response.status
+                }, null, 2);
+                detailsElement.style.display = 'block';
+                
+                if (response.ok) {
+                    statusElement.textContent = '✅ Registro funcionando correctamente';
+                    statusElement.className = 'status-success';
+                    testResults.registration = true;
+                } else {
+                    statusElement.textContent = `❌ Error en registro: ${result.error}`;
+                    statusElement.className = 'status-error';
+                }
+            } catch (error) {
+                statusElement.textContent = `❌ Error de registro: ${error.message}`;
+                statusElement.className = 'status-error';
+            }
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summaryElement = document.getElementById('systemSummary');
+            const passedTests = Object.values(testResults).filter(Boolean).length;
+            const totalTests = Object.keys(testResults).length;
+            
+            let summaryHTML = `<p><strong>Pruebas completadas: ${passedTests}/${totalTests}</strong></p>`;
+            
+            summaryHTML += '<ul class="list-unstyled">';
+            summaryHTML += `<li>${testResults.server ? '✅' : '❌'} Servidor</li>`;
+            summaryHTML += `<li>${testResults.environment ? '✅' : '❌'} Variables de Entorno</li>`;
+            summaryHTML += `<li>${testResults.database ? '✅' : '❌'} Base de Datos</li>`;
+            summaryHTML += `<li>${testResults.tableStructure ? '✅' : '❌'} Estructura de Tabla</li>`;
+            summaryHTML += `<li>${testResults.simpleRegistration ? '✅' : '❌'} Registro Simple</li>`;
+            summaryHTML += `<li>${testResults.registration ? '✅' : '❌'} Registro Completo</li>`;
+            summaryHTML += '</ul>';
+            
+            if (passedTests === totalTests) {
+                summaryHTML += '<p class="status-success"><strong>🎉 ¡Sistema completamente funcional!</strong></p>';
+            } else {
+                summaryHTML += '<p class="status-warning"><strong>⚠️ Sistema requiere atención</strong></p>';
+            }
+            
+            summaryElement.innerHTML = summaryHTML;
+        }
+
+        async function runAllTests() {
+            await testServer();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testEnvironment();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testDatabase();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testTableStructure();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testSimpleRegistration();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testRegistration();
+        }
+
+        function clearResults() {
+            testResults = { 
+                server: false, 
+                environment: false, 
+                database: false, 
+                tableStructure: false,
+                simpleRegistration: false,
+                registration: false 
+            };
+            
+            document.getElementById('serverStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('envStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('dbStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('tableStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('simpleRegisterStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('registerStatus').textContent = '⏳ Listo para probar...';
+            
+            document.getElementById('envDetails').style.display = 'none';
+            document.getElementById('dbDetails').style.display = 'none';
+            document.getElementById('tableDetails').style.display = 'none';
+            document.getElementById('simpleRegisterDetails').style.display = 'none';
+            document.getElementById('registerDetails').style.display = 'none';
+            
+            updateSummary();
+        }
+
+        // Ejecutar pruebas básicas al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                testServer();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

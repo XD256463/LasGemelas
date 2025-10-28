@@ -119,13 +119,105 @@ app.post('/api/registro', async (req, res) => {
         
     } catch (error) {
         console.error('=== ERROR REGISTRO ===');
-        console.error('Error:', error);
+        console.error('Error completo:', error);
+        console.error('Stack:', error.stack);
         
+        // Asegurar que siempre respondemos con JSON
+        if (!res.headersSent) {
+            let errorMessage = 'Error interno del servidor';
+            let statusCode = 500;
+            
+            // Manejar errores específicos de MySQL
+            if (error.code === 'ER_DUP_ENTRY') {
+                errorMessage = 'El email ya está registrado';
+                statusCode = 400;
+            } else if (error.code === 'ECONNREFUSED') {
+                errorMessage = 'No se puede conectar a la base de datos';
+                statusCode = 503;
+            } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+                errorMessage = 'Error de autenticación con la base de datos';
+                statusCode = 503;
+            } else if (error.code === 'ETIMEDOUT') {
+                errorMessage = 'Timeout de conexión a la base de datos';
+                statusCode = 503;
+            }
+            
+            res.status(statusCode).json({
+                success: false,
+                error: errorMessage,
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+                code: error.code,
+                timestamp: new Date().toISOString()
+            });
+        }
+    }
+});
+
+// Endpoint de debug para probar registro paso a paso
+app.post('/api/debug-registro', async (req, res) => {
+    const steps = [];
+    
+    try {
+        steps.push('1. Recibiendo petición');
+        console.log('=== DEBUG REGISTRO ===');
+        console.log('Headers:', req.headers);
+        console.log('Body:', req.body);
+        
+        const { nombre, email, password, telefono, direccion } = req.body;
+        
+        steps.push('2. Validando datos');
+        if (!nombre) throw new Error('Nombre requerido');
+        if (!email) throw new Error('Email requerido');
+        if (!password) throw new Error('Password requerido');
+        
+        steps.push('3. Obteniendo conexión BD');
+        const connection = await pool.getConnection();
+        
+        steps.push('4. Verificando usuario existente');
+        const [existing] = await connection.execute(
+            'SELECT id FROM usuarios WHERE email = ?',
+            [email]
+        );
+        
+        if (existing.length > 0) {
+            connection.release();
+            return res.status(400).json({ 
+                success: false,
+                error: 'Usuario ya existe',
+                steps: steps
+            });
+        }
+        
+        steps.push('5. Encriptando password');
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        steps.push('6. Insertando en BD');
+        const [result] = await connection.execute(
+            'INSERT INTO usuarios (nombre, email, password, telefono, direccion) VALUES (?, ?, ?, ?, ?)',
+            [nombre, email, hashedPassword, telefono || null, direccion || null]
+        );
+        
+        steps.push('7. Usuario creado exitosamente');
+        connection.release();
+        
+        res.status(201).json({
+            success: true,
+            message: 'Usuario registrado exitosamente',
+            userId: result.insertId,
+            steps: steps
+        });
+        
+    } catch (error) {
+        console.error('Error en debug registro:', error);
         res.status(500).json({
             success: false,
-            error: 'Error interno del servidor',
-            message: error.message,
-            code: error.code
+            error: error.message,
+            steps: steps,
+            errorDetails: {
+                code: error.code,
+                errno: error.errno,
+                sqlState: error.sqlState
+            }
         });
     }
 });
@@ -193,13 +285,28 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
+// Middleware para manejar rutas no encontradas
+app.use('*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'Ruta no encontrada',
+        path: req.originalUrl,
+        method: req.method
+    });
+});
+
 // Manejo de errores global
 app.use((error, req, res, next) => {
     console.error('Error no manejado:', error);
-    res.status(500).json({ 
-        error: 'Error interno del servidor',
-        message: error.message 
-    });
+    
+    if (!res.headersSent) {
+        res.status(500).json({ 
+            success: false,
+            error: 'Error interno del servidor',
+            message: process.env.NODE_ENV === 'development' ? error.message : 'Error interno',
+            timestamp: new Date().toISOString()
+        });
+    }
 });
 
 // Iniciar servidor

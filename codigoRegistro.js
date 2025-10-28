@@ -198,6 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 direccion: address
             };
 
+            // Debug: Mostrar datos que se van a enviar
+            console.log('Enviando datos de registro:', userData);
+
             // Enviar datos al servidor
             const response = await fetch('/api/registro', {
                 method: 'POST',
@@ -207,7 +210,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(userData)
             });
 
-            const result = await response.json();
+            console.log('Respuesta del servidor:', response.status, response.statusText);
+
+            // Verificar si la respuesta es JSON válida
+            let result;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                const textResponse = await response.text();
+                console.error('Respuesta no es JSON:', textResponse);
+                throw new Error(`Servidor respondió con: ${textResponse}`);
+            }
+
+            console.log('Resultado parseado:', result);
 
             if (response.ok) {
                 // Registro exitoso

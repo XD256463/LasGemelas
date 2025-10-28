@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Registro - Las Gemelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .debug-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .status-success { color: #27ae60; font-weight: bold; }
+        .status-error { color: #e74c3c; font-weight: bold; }
+        .status-loading { color: #3498db; font-weight: bold; }
+        .json-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step-list {
+            background: #e3f2fd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="debug-container">
+            <h2 class="text-center mb-4">🐛 Debug Registro - Las Gemelas</h2>
+            
+            <!-- Formulario de Prueba -->
+            <div class="form-section">
+                <h5>📝 Formulario de Prueba</h5>
+                <form id="debugForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label">Nombre:</label>
+                                <input type="text" class="form-control" id="nombre" value="Usuario Debug" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email:</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="telefono" class="form-label">Teléfono:</label>
+                                <input type="tel" class="form-control" id="telefono" value="+57 300 123 4567">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña:</label>
+                                <input type="password" class="form-control" id="password" value="Debug123!" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label">Dirección:</label>
+                        <textarea class="form-control" id="direccion" rows="2">Dirección de prueba debug</textarea>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary me-2" onclick="generateRandomEmail()">🎲 Email Aleatorio</button>
+                        <button type="button" class="btn btn-success me-2" onclick="testDebugRegistro()">🐛 Debug Registro</button>
+                        <button type="button" class="btn btn-info me-2" onclick="testNormalRegistro()">📝 Registro Normal</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearResults()">🗑️ Limpiar</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Estado del Test -->
+            <div class="form-section">
+                <h5>📊 Estado del Test</h5>
+                <p id="testStatus" class="status-loading">⏳ Listo para probar...</p>
+                <div id="stepsList" class="step-list" style="display: none;">
+                    <h6>Pasos Ejecutados:</h6>
+                    <ul id="stepsUl"></ul>
+                </div>
+            </div>
+            
+            <!-- Respuesta del Servidor -->
+            <div class="form-section">
+                <h5>🖥️ Respuesta del Servidor</h5>
+                <div id="serverResponse" class="json-output" style="display: none;"></div>
+            </div>
+            
+            <!-- Logs del Cliente -->
+            <div class="form-section">
+                <h5>📱 Logs del Cliente</h5>
+                <div id="clientLogs" class="json-output" style="display: none;"></div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="registro.html" class="btn btn-outline-primary me-2">📝 Registro Real</a>
+                <a href="test-railway-mysql.html" class="btn btn-outline-info me-2">🐬 Test MySQL</a>
+                <a href="index.html" class="btn btn-outline-secondary">🏠 Inicio</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+
+        function log(message, data = null) {
+            const timestamp = new Date().toISOString();
+            const logEntry = { timestamp, message, data };
+            logs.push(logEntry);
+            
+            console.log(`[${timestamp}] ${message}`, data);
+            updateClientLogs();
+        }
+
+        function updateClientLogs() {
+            const logsEl = document.getElementById('clientLogs');
+            logsEl.textContent = JSON.stringify(logs, null, 2);
+            logsEl.style.display = 'block';
+        }
+
+        function generateRandomEmail() {
+            const timestamp = Date.now();
+            const randomNum = Math.floor(Math.random() * 1000);
+            document.getElementById('email').value = `debug_${timestamp}_${randomNum}@lasgemelas.com`;
+            log('Email aleatorio generado');
+        }
+
+        function getFormData() {
+            return {
+                nombre: document.getElementById('nombre').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value,
+                telefono: document.getElementById('telefono').value.trim(),
+                direccion: document.getElementById('direccion').value.trim()
+            };
+        }
+
+        async function testDebugRegistro() {
+            const statusEl = document.getElementById('testStatus');
+            const responseEl = document.getElementById('serverResponse');
+            const stepsEl = document.getElementById('stepsList');
+            const stepsUl = document.getElementById('stepsUl');
+            
+            statusEl.textContent = '⏳ Ejecutando debug registro...';
+            statusEl.className = 'status-loading';
+            
+            const formData = getFormData();
+            log('Iniciando debug registro', formData);
+            
+            try {
+                log('Enviando petición a /api/debug-registro');
+                
+                const response = await fetch('/api/debug-registro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                log('Respuesta recibida', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                });
+                
+                const result = await response.json();
+                log('Resultado parseado', result);
+                
+                // Mostrar respuesta
+                responseEl.textContent = JSON.stringify(result, null, 2);
+                responseEl.style.display = 'block';
+                
+                // Mostrar pasos
+                if (result.steps) {
+                    stepsUl.innerHTML = result.steps.map(step => `<li>${step}</li>`).join('');
+                    stepsEl.style.display = 'block';
+                }
+                
+                if (response.ok && result.success) {
+                    statusEl.textContent = `✅ Debug registro exitoso (ID: ${result.userId})`;
+                    statusEl.className = 'status-success';
+                } else {
+                    statusEl.textContent = `❌ Error en debug registro: ${result.error}`;
+                    statusEl.className = 'status-error';
+                }
+                
+            } catch (error) {
+                log('Error en debug registro', error);
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'status-error';
+                
+                responseEl.textContent = JSON.stringify({
+                    error: error.message,
+                    stack: error.stack
+                }, null, 2);
+                responseEl.style.display = 'block';
+            }
+        }
+
+        async function testNormalRegistro() {
+            const statusEl = document.getElementById('testStatus');
+            const responseEl = document.getElementById('serverResponse');
+            
+            statusEl.textContent = '⏳ Ejecutando registro normal...';
+            statusEl.className = 'status-loading';
+            
+            const formData = getFormData();
+            log('Iniciando registro normal', formData);
+            
+            try {
+                log('Enviando petición a /api/registro');
+                
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                log('Respuesta recibida', {
+                    status: response.status,
+                    statusText: response.statusText
+                });
+                
+                const result = await response.json();
+                log('Resultado parseado', result);
+                
+                // Mostrar respuesta
+                responseEl.textContent = JSON.stringify(result, null, 2);
+                responseEl.style.display = 'block';
+                
+                if (response.ok && result.success) {
+                    statusEl.textContent = `✅ Registro normal exitoso (ID: ${result.userId})`;
+                    statusEl.className = 'status-success';
+                } else {
+                    statusEl.textContent = `❌ Error en registro normal: ${result.error}`;
+                    statusEl.className = 'status-error';
+                }
+                
+            } catch (error) {
+                log('Error en registro normal', error);
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'status-error';
+                
+                responseEl.textContent = JSON.stringify({
+                    error: error.message,
+                    stack: error.stack
+                }, null, 2);
+                responseEl.style.display = 'block';
+            }
+        }
+
+        function clearResults() {
+            logs = [];
+            document.getElementById('testStatus').textContent = '⏳ Listo para probar...';
+            document.getElementById('testStatus').className = 'status-loading';
+            document.getElementById('serverResponse').style.display = 'none';
+            document.getElementById('clientLogs').style.display = 'none';
+            document.getElementById('stepsList').style.display = 'none';
+        }
+
+        // Generar email aleatorio al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            generateRandomEmail();
+            log('Página de debug cargada');
+        });
+    </script>
+</body>
+</html>

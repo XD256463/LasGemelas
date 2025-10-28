@@ -132,13 +132,145 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🎯 Event listener del login configurado');
 });
 
-const togglePassword = document.getElementById('togglePassword');
-const passwordInput = document.getElementById('loginPassword');
+// Toggle para mostrar/ocultar contraseña en LOGIN - Versión ULTRA ROBUSTA
+function initLoginPasswordToggle() {
+    console.log('🔐 Inicializando toggle de contraseña para login...');
+    
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('loginPassword');
+    const passwordIcon = document.getElementById('loginPasswordIcon');
+    
+    if (!togglePassword || !passwordInput) {
+        console.error('❌ Elementos del toggle no encontrados:', {
+            togglePassword: !!togglePassword,
+            passwordInput: !!passwordInput
+        });
+        return;
+    }
 
-if (togglePassword && passwordInput) {
-    togglePassword.addEventListener('click', () => {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        togglePassword.textContent = type === 'password' ? '👁️' : '🔒';
+    let isPasswordVisible = false; // Estado interno
+    
+    // Función principal de toggle
+    function togglePasswordVisibility(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        console.log('🔄 Toggle login ejecutado - Estado actual:', isPasswordVisible ? 'visible' : 'oculta');
+        
+        // Cambiar estado
+        isPasswordVisible = !isPasswordVisible;
+        
+        // Aplicar cambios al input
+        passwordInput.type = isPasswordVisible ? 'text' : 'password';
+        
+        // Actualizar icono
+        updateToggleIcon();
+        
+        // Forzar que el botón permanezca activo
+        forceButtonActive();
+        
+        console.log('✅ Toggle login completado - Nuevo estado:', isPasswordVisible ? 'visible' : 'oculta');
+    }
+    
+    // Función para actualizar el icono
+    function updateToggleIcon() {
+        if (passwordIcon) {
+            if (isPasswordVisible) {
+                passwordIcon.className = 'bi bi-eye-slash';
+                togglePassword.title = 'Ocultar contraseña';
+            } else {
+                passwordIcon.className = 'bi bi-eye';
+                togglePassword.title = 'Mostrar contraseña';
+            }
+        } else {
+            // Fallback para emoji
+            togglePassword.innerHTML = isPasswordVisible ? '🙈' : '👁️';
+            togglePassword.title = isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña';
+        }
+    }
+    
+    // Función para forzar que el botón esté siempre activo
+    function forceButtonActive() {
+        togglePassword.disabled = false;
+        togglePassword.style.pointerEvents = 'auto';
+        togglePassword.style.opacity = '1';
+        togglePassword.style.cursor = 'pointer';
+        togglePassword.setAttribute('tabindex', '-1');
+        
+        // Remover cualquier clase que pueda desactivarlo
+        togglePassword.classList.remove('disabled');
+        togglePassword.removeAttribute('disabled');
+    }
+    
+    // Event listeners múltiples
+    togglePassword.addEventListener('click', togglePasswordVisibility, true);
+    togglePassword.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }, true);
+    
+    // Interceptar todos los eventos que puedan desactivar el botón
+    togglePassword.addEventListener('blur', forceButtonActive, true);
+    togglePassword.addEventListener('focusout', forceButtonActive, true);
+    
+    // Configurar estado inicial
+    forceButtonActive();
+    updateToggleIcon();
+    
+    // Observer para detectar cambios en el botón
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes') {
+                if (mutation.attributeName === 'disabled' || 
+                    mutation.attributeName === 'class' ||
+                    mutation.attributeName === 'style') {
+                    console.log('🔧 Detectado cambio en botón login, forzando activación...');
+                    forceButtonActive();
+                }
+            }
+        });
     });
+    
+    observer.observe(togglePassword, {
+        attributes: true,
+        attributeFilter: ['disabled', 'class', 'style']
+    });
+    
+    // Función de mantenimiento que se ejecuta periódicamente
+    function maintainButton() {
+        forceButtonActive();
+        updateToggleIcon();
+    }
+    
+    // Ejecutar mantenimiento cada 500ms
+    setInterval(maintainButton, 500);
+    
+    // Función global para testing
+    window.testLoginPasswordToggle = togglePasswordVisibility;
+    window.forceLoginPasswordToggleActive = forceButtonActive;
+    
+    console.log('✅ Toggle de login inicializado con protección ultra robusta');
 }
+
+// Inicializar el toggle de login
+initLoginPasswordToggle();
+
+// Re-inicializar múltiples veces para asegurar que funcione
+setTimeout(initLoginPasswordToggle, 100);
+setTimeout(initLoginPasswordToggle, 500);
+setTimeout(initLoginPasswordToggle, 1000);
+
+// Interceptar eventos globales que puedan afectar el botón
+document.addEventListener('click', function(e) {
+    // Si se hace clic fuera, asegurar que el botón siga activo
+    const togglePassword = document.getElementById('togglePassword');
+    if (togglePassword) {
+        setTimeout(() => {
+            togglePassword.disabled = false;
+            togglePassword.style.pointerEvents = 'auto';
+            togglePassword.style.opacity = '1';
+        }, 10);
+    }
+});

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Toggle Persistente - Las Gemelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .test-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Estilos ULTRA ROBUSTOS para el toggle */
+        .password-toggle-btn {
+            border-left: none !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            cursor: pointer !important;
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+        
+        .password-toggle-btn:hover,
+        .password-toggle-btn.hover,
+        .password-toggle-btn:focus,
+        .password-toggle-btn.focus,
+        .password-toggle-btn:active,
+        .password-toggle-btn.active,
+        .password-toggle-btn:disabled,
+        .password-toggle-btn.disabled,
+        .password-toggle-btn[disabled] {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+        
+        .test-area {
+            border: 2px dashed #dee2e6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .click-area {
+            height: 100px;
+            background: #e9ecef;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-active { background-color: #28a745; }
+        .status-inactive { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-container">
+            <h2 class="text-center mb-4">🔒 Test Toggle Persistente</h2>
+            <p class="text-center text-muted">Prueba que el botón NUNCA se desactive, sin importar dónde hagas clic</p>
+            
+            <!-- Campo de Prueba Principal -->
+            <div class="test-area">
+                <h5>🎯 Campo de Contraseña con Toggle Persistente</h5>
+                <div class="mb-3">
+                    <label for="testPassword" class="form-label">Contraseña:</label>
+                    <div class="input-group">
+                        <input type="password" id="testPassword" class="form-control" placeholder="Escribe algo o déjalo vacío">
+                        <button class="btn btn-outline-secondary password-toggle-btn" type="button" id="testToggle" title="Mostrar contraseña">
+                            <i class="bi bi-eye" id="testIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small>
+                        Estado del botón: 
+                        <span class="status-indicator status-active" id="buttonStatus"></span>
+                        <span id="buttonStatusText">Activo</span>
+                    </small>
+                    <small>
+                        Contraseña: <span id="passwordState">Oculta</span>
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Áreas de Click para Probar -->
+            <div class="test-area">
+                <h5>🖱️ Áreas de Click para Probar</h5>
+                <p>Haz clic en estas áreas y luego verifica que el botón siga funcionando:</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="click-area" onclick="testClickOutside('Área 1')">
+                            📍 Área de Click 1
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="click-area" onclick="testClickOutside('Área 2')">
+                            📍 Área de Click 2
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <button class="btn btn-primary w-100" onclick="testClickOutside('Botón 1')">
+                            Botón de Prueba 1
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-secondary w-100" onclick="testClickOutside('Botón 2')">
+                            Botón de Prueba 2
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-success w-100" onclick="testClickOutside('Botón 3')">
+                            Botón de Prueba 3
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tests Automáticos -->
+            <div class="test-area">
+                <h5>🤖 Tests Automáticos</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="testToggleFunction()">
+                            🔄 Test Toggle
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-warning w-100 mb-2" onclick="testMultipleClicks()">
+                            🖱️ Clicks Múltiples
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-info w-100 mb-2" onclick="testFocusBlur()">
+                            👁️ Focus/Blur
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-danger w-100 mb-2" onclick="testForceDisable()">
+                            ⚠️ Forzar Desactivar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Log de Eventos -->
+            <div class="test-area">
+                <h5>📋 Log de Eventos</h5>
+                <div id="eventLog" class="font-monospace small" style="height: 150px; overflow-y: auto; background: white; padding: 10px; border-radius: 5px;">
+                    <em>Los eventos aparecerán aquí...</em>
+                </div>
+                <button class="btn btn-sm btn-secondary mt-2" onclick="clearLog()">🗑️ Limpiar Log</button>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="registro.html" class="btn btn-primary me-2">📝 Ir al Registro</a>
+                <a href="test-password-enhanced.html" class="btn btn-info me-2">🔧 Test Avanzado</a>
+                <a href="index.html" class="btn btn-outline-secondary">🏠 Inicio</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let eventCount = 0;
+        let isPasswordVisible = false;
+
+        function log(message, type = 'info') {
+            eventCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${eventCount}] [${timestamp}] ${message}`;
+            
+            const logDiv = document.getElementById('eventLog');
+            logDiv.innerHTML += logEntry + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(logEntry);
+        }
+
+        function updateStatus() {
+            const button = document.getElementById('testToggle');
+            const statusIndicator = document.getElementById('buttonStatus');
+            const statusText = document.getElementById('buttonStatusText');
+            const passwordState = document.getElementById('passwordState');
+            const passwordInput = document.getElementById('testPassword');
+            
+            // Verificar si el botón está realmente activo
+            const isActive = !button.disabled && 
+                           button.style.pointerEvents !== 'none' && 
+                           button.style.opacity !== '0';
+            
+            if (isActive) {
+                statusIndicator.className = 'status-indicator status-active';
+                statusText.textContent = 'Activo';
+            } else {
+                statusIndicator.className = 'status-indicator status-inactive';
+                statusText.textContent = 'Inactivo';
+            }
+            
+            passwordState.textContent = passwordInput.type === 'password' ? 'Oculta' : 'Visible';
+        }
+
+        function forceButtonActive() {
+            const button = document.getElementById('testToggle');
+            
+            button.disabled = false;
+            button.style.pointerEvents = 'auto';
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            button.removeAttribute('disabled');
+            button.classList.remove('disabled');
+            
+            updateStatus();
+        }
+
+        function initPersistentToggle() {
+            const passwordInput = document.getElementById('testPassword');
+            const toggleButton = document.getElementById('testToggle');
+            const icon = document.getElementById('testIcon');
+            
+            if (!passwordInput || !toggleButton || !icon) {
+                log('ERROR: Elementos no encontrados', 'error');
+                return;
+            }
+            
+            function togglePassword(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                isPasswordVisible = !isPasswordVisible;
+                passwordInput.type = isPasswordVisible ? 'text' : 'password';
+                
+                if (isPasswordVisible) {
+                    icon.className = 'bi bi-eye-slash';
+                    toggleButton.title = 'Ocultar contraseña';
+                } else {
+                    icon.className = 'bi bi-eye';
+                    toggleButton.title = 'Mostrar contraseña';
+                }
+                
+                forceButtonActive();
+                log(`Toggle ejecutado: ${isPasswordVisible ? 'Mostrar' : 'Ocultar'} contraseña`);
+            }
+            
+            // Event listeners
+            toggleButton.addEventListener('click', togglePassword, true);
+            toggleButton.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, true);
+            
+            // Observer para detectar cambios
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes') {
+                        log(`Detectado cambio en atributo: ${mutation.attributeName}`);
+                        forceButtonActive();
+                    }
+                });
+            });
+            
+            observer.observe(toggleButton, {
+                attributes: true,
+                attributeFilter: ['disabled', 'class', 'style']
+            });
+            
+            // Mantenimiento periódico
+            setInterval(() => {
+                forceButtonActive();
+            }, 500);
+            
+            forceButtonActive();
+            log('Toggle persistente inicializado');
+        }
+
+        // Tests
+        function testClickOutside(area) {
+            log(`Click en ${area} - Verificando estado del botón...`);
+            setTimeout(() => {
+                updateStatus();
+                log('Estado verificado después del click externo');
+            }, 100);
+        }
+
+        function testToggleFunction() {
+            log('Ejecutando test de toggle...');
+            document.getElementById('testToggle').click();
+        }
+
+        function testMultipleClicks() {
+            log('Ejecutando clicks múltiples...');
+            const button = document.getElementById('testToggle');
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    button.click();
+                    log(`Click múltiple ${i + 1}/5`);
+                }, i * 200);
+            }
+        }
+
+        function testFocusBlur() {
+            log('Test de focus/blur...');
+            const input = document.getElementById('testPassword');
+            const button = document.getElementById('testToggle');
+            
+            input.focus();
+            setTimeout(() => {
+                input.blur();
+                log('Input blur ejecutado');
+                setTimeout(() => {
+                    button.click();
+                    log('Click después de blur');
+                }, 100);
+            }, 500);
+        }
+
+        function testForceDisable() {
+            log('Intentando forzar desactivación...');
+            const button = document.getElementById('testToggle');
+            
+            // Intentar desactivar de múltiples formas
+            button.disabled = true;
+            button.style.pointerEvents = 'none';
+            button.style.opacity = '0.5';
+            button.classList.add('disabled');
+            
+            log('Desactivación forzada aplicada');
+            
+            setTimeout(() => {
+                log('Verificando si el sistema lo reactivó...');
+                updateStatus();
+            }, 1000);
+        }
+
+        function clearLog() {
+            document.getElementById('eventLog').innerHTML = '<em>Log limpiado...</em>';
+            eventCount = 0;
+        }
+
+        // Interceptar clicks globales
+        document.addEventListener('click', function(e) {
+            if (e.target.id !== 'testToggle') {
+                setTimeout(() => {
+                    forceButtonActive();
+                }, 10);
+            }
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Página cargada - Inicializando toggle persistente...');
+            initPersistentToggle();
+            
+            // Actualizar estado cada segundo
+            setInterval(updateStatus, 1000);
+        });
+    </script>
+</body>
+</html>

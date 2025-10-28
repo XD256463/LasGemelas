@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Toggle - Las Gemelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .test-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Estilos para el toggle de login */
+        #togglePassword {
+            border-left: none !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            cursor: pointer !important;
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+        
+        #togglePassword:hover,
+        #togglePassword:focus,
+        #togglePassword:active,
+        #togglePassword:disabled,
+        #togglePassword.disabled,
+        #togglePassword[disabled] {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+        
+        .demo-section {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-active { background-color: #28a745; }
+        .status-inactive { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-container">
+            <h2 class="text-center mb-4">🔐 Test Login Toggle</h2>
+            <p class="text-center text-muted">Prueba del toggle de contraseña en el formulario de login</p>
+            
+            <!-- Formulario de Login de Prueba -->
+            <div class="demo-section">
+                <h5>🎯 Formulario de Login (Réplica del Original)</h5>
+                <form id="testLoginForm">
+                    <div class="mb-3">
+                        <label for="loginUsername" class="form-label">Usuario:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Código de Usuario (Ej: U23201604)"
+                                id="loginUsername" name="loginUsername">
+                            <span class="input-group-text">🆔</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="loginPassword" class="form-label">Contraseña:</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" placeholder="Contraseña" id="loginPassword"
+                                name="loginPassword">
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword" title="Mostrar contraseña">
+                                <i class="bi bi-eye" id="loginPasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small>
+                            Estado del botón: 
+                            <span class="status-indicator status-active" id="buttonStatus"></span>
+                            <span id="buttonStatusText">Activo</span>
+                        </small>
+                        <small>
+                            Contraseña: <span id="passwordState">Oculta</span>
+                        </small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        ✨ Iniciar Sesión ✨
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Tests de Funcionalidad -->
+            <div class="demo-section">
+                <h5>🧪 Tests de Funcionalidad</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="testToggle()">
+                            🔄 Test Toggle
+                        </button>
+                        <button class="btn btn-outline-success w-100 mb-2" onclick="fillTestData()">
+                            📝 Llenar Datos
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-warning w-100 mb-2" onclick="testClickOutside()">
+                            👆 Click Fuera
+                        </button>
+                        <button class="btn btn-outline-info w-100 mb-2" onclick="testMultipleClicks()">
+                            🖱️ Clicks Múltiples
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-danger w-100 mb-2" onclick="testForceDisable()">
+                            ⚠️ Forzar Desactivar
+                        </button>
+                        <button class="btn btn-outline-dark w-100 mb-2" onclick="runAllTests()">
+                            🚀 Todos los Tests
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comparación con Registro -->
+            <div class="demo-section">
+                <h5>🔄 Comparación</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>🔐 Login Toggle</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>ID del botón:</strong> togglePassword</p>
+                                <p><strong>ID del input:</strong> loginPassword</p>
+                                <p><strong>ID del icono:</strong> loginPasswordIcon</p>
+                                <p><strong>Estado:</strong> <span id="loginToggleStatus">Verificando...</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>📝 Registro Toggle</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>ID del botón:</strong> registerTogglePassword</p>
+                                <p><strong>ID del input:</strong> registerPassword</p>
+                                <p><strong>ID del icono:</strong> passwordIcon</p>
+                                <p><strong>Estado:</strong> No disponible en esta página</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Log de Eventos -->
+            <div class="demo-section">
+                <h5>📋 Log de Eventos</h5>
+                <div id="eventLog" class="font-monospace small" style="height: 150px; overflow-y: auto; background: white; padding: 10px; border-radius: 5px;">
+                    <em>Los eventos aparecerán aquí...</em>
+                </div>
+                <button class="btn btn-sm btn-secondary mt-2" onclick="clearLog()">🗑️ Limpiar Log</button>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="index.html" class="btn btn-primary me-2">🔐 Login Real</a>
+                <a href="registro.html" class="btn btn-success me-2">📝 Registro Real</a>
+                <a href="test-toggle-persistent.html" class="btn btn-info me-2">🔧 Test Persistente</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let eventCount = 0;
+
+        function log(message) {
+            eventCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${eventCount}] [${timestamp}] ${message}`;
+            
+            const logDiv = document.getElementById('eventLog');
+            logDiv.innerHTML += logEntry + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(logEntry);
+        }
+
+        function updateStatus() {
+            const button = document.getElementById('togglePassword');
+            const statusIndicator = document.getElementById('buttonStatus');
+            const statusText = document.getElementById('buttonStatusText');
+            const passwordState = document.getElementById('passwordState');
+            const passwordInput = document.getElementById('loginPassword');
+            const loginToggleStatus = document.getElementById('loginToggleStatus');
+            
+            if (!button || !passwordInput) {
+                loginToggleStatus.textContent = 'Elementos no encontrados';
+                return;
+            }
+            
+            // Verificar si el botón está realmente activo
+            const isActive = !button.disabled && 
+                           button.style.pointerEvents !== 'none' && 
+                           button.style.opacity !== '0';
+            
+            if (isActive) {
+                statusIndicator.className = 'status-indicator status-active';
+                statusText.textContent = 'Activo';
+                loginToggleStatus.textContent = 'Funcionando correctamente';
+            } else {
+                statusIndicator.className = 'status-indicator status-inactive';
+                statusText.textContent = 'Inactivo';
+                loginToggleStatus.textContent = 'Problema detectado';
+            }
+            
+            passwordState.textContent = passwordInput.type === 'password' ? 'Oculta' : 'Visible';
+        }
+
+        // Tests específicos
+        function testToggle() {
+            log('Ejecutando test de toggle...');
+            const button = document.getElementById('togglePassword');
+            if (button) {
+                button.click();
+                log('Click en toggle ejecutado');
+            } else {
+                log('ERROR: Botón no encontrado');
+            }
+        }
+
+        function fillTestData() {
+            log('Llenando datos de prueba...');
+            document.getElementById('loginUsername').value = 'U23201604';
+            document.getElementById('loginPassword').value = 'TestPassword123!';
+            log('Datos de prueba llenados');
+        }
+
+        function testClickOutside() {
+            log('Test de click fuera del campo...');
+            document.body.click();
+            setTimeout(() => {
+                updateStatus();
+                log('Estado verificado después de click fuera');
+            }, 100);
+        }
+
+        function testMultipleClicks() {
+            log('Test de clicks múltiples...');
+            const button = document.getElementById('togglePassword');
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    button.click();
+                    log(`Click múltiple ${i + 1}/5`);
+                }, i * 200);
+            }
+        }
+
+        function testForceDisable() {
+            log('Intentando forzar desactivación...');
+            const button = document.getElementById('togglePassword');
+            
+            button.disabled = true;
+            button.style.pointerEvents = 'none';
+            button.style.opacity = '0.5';
+            
+            log('Desactivación forzada aplicada');
+            
+            setTimeout(() => {
+                updateStatus();
+                log('Estado verificado - ¿Se reactivó automáticamente?');
+            }, 1000);
+        }
+
+        function runAllTests() {
+            log('=== EJECUTANDO TODOS LOS TESTS ===');
+            
+            const tests = [
+                () => fillTestData(),
+                () => testToggle(),
+                () => testClickOutside(),
+                () => testMultipleClicks(),
+                () => testForceDisable()
+            ];
+            
+            tests.forEach((test, index) => {
+                setTimeout(test, index * 1500);
+            });
+            
+            setTimeout(() => {
+                log('=== TESTS COMPLETADOS ===');
+            }, tests.length * 1500);
+        }
+
+        function clearLog() {
+            document.getElementById('eventLog').innerHTML = '<em>Log limpiado...</em>';
+            eventCount = 0;
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Página de test de login cargada');
+            
+            // Actualizar estado cada segundo
+            setInterval(updateStatus, 1000);
+            
+            // Inicializar estado
+            updateStatus();
+        });
+    </script>
+    
+    <!-- Incluir los mismos scripts que el login real -->
+    <script src="api-client.js"></script>
+    <script src="password-toggle-fix.js"></script>
+    <script src="toggle-guardian.js"></script>
+</body>
+</html>

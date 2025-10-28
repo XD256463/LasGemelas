@@ -8,7 +8,56 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos ULTRA ROBUSTOS para el toggle de contraseña en login */
+        #togglePassword {
+            border-left: none !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            cursor: pointer !important;
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+        
+        /* Forzar estados activos */
+        #togglePassword:hover,
+        #togglePassword.hover,
+        #togglePassword:focus,
+        #togglePassword.focus,
+        #togglePassword:active,
+        #togglePassword.active,
+        #togglePassword:disabled,
+        #togglePassword.disabled,
+        #togglePassword[disabled] {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+        
+        /* Forzar visibilidad del icono */
+        #loginPasswordIcon {
+            opacity: 1 !important;
+            pointer-events: none !important;
+            color: #495057 !important;
+        }
+        
+        /* Asegurar que el input group funcione correctamente */
+        .input-group > .form-control:not(:last-child) {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        
+        .input-group > .btn:not(:first-child) {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+    </style>
 </head>
 
 <body class="login-container page-loader">
@@ -28,10 +77,14 @@
                                 id="loginUsername" name="loginUsername" required>
                             <span class="input-group-text">🆔</span>
                         </div>
-                        <div class="input-group mb-3 input-container">
-                            <input type="password" class="form-control" placeholder="Contraseña" id="loginPassword"
-                                name="loginPassword" required>
-                            <span class="toggle-password" id="togglePassword">👁️</span>
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <input type="password" class="form-control" placeholder="Contraseña" id="loginPassword"
+                                    name="loginPassword" required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword" title="Mostrar contraseña">
+                                    <i class="bi bi-eye" id="loginPasswordIcon"></i>
+                                </button>
+                            </div>
                         </div>
                         <div id="errorMessage" class="alert"
                             style="display: none; margin-bottom: 15px; padding: 10px; border-radius: 8px; font-weight: 500; text-align: center;">
@@ -57,8 +110,12 @@
             </div>
         </div>
     </div>
+    <!-- Scripts -->
+    <script src="api-client.js"></script>
+    <script src="password-toggle-fix.js"></script>
+    <script src="codigoIndex.js"></script>
+    <script src="toggle-guardian.js"></script>
+    <script src="efectos.js"></script>
 </body>
 
 </html>
-<script src="codigoIndex.js"></script>
-<script src="efectos.js"></script>

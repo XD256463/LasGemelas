@@ -77,27 +77,59 @@
             cursor: not-allowed;
         }
         
-        /* Estilos específicos para el toggle de contraseña */
+        /* Estilos ULTRA ROBUSTOS para el toggle de contraseña */
         #registerTogglePassword {
             border-left: none !important;
             pointer-events: auto !important;
             opacity: 1 !important;
             cursor: pointer !important;
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
         }
         
-        #registerTogglePassword:hover {
+        /* Forzar estados activos */
+        #registerTogglePassword:hover,
+        #registerTogglePassword.hover {
             background-color: #e9ecef !important;
             border-color: #ced4da !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
         }
         
-        #registerTogglePassword:focus {
+        #registerTogglePassword:focus,
+        #registerTogglePassword.focus {
             box-shadow: none !important;
             border-color: #ced4da !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
         }
         
-        #registerTogglePassword:active {
+        #registerTogglePassword:active,
+        #registerTogglePassword.active {
             background-color: #dee2e6 !important;
             border-color: #ced4da !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Prevenir desactivación */
+        #registerTogglePassword:disabled,
+        #registerTogglePassword.disabled,
+        #registerTogglePassword[disabled] {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            background-color: #f8f9fa !important;
+            border-color: #ced4da !important;
+            color: #495057 !important;
+        }
+        
+        /* Forzar visibilidad del icono */
+        #passwordIcon {
+            opacity: 1 !important;
+            pointer-events: none !important;
+            color: #495057 !important;
         }
         
         /* Asegurar que el input group funcione correctamente */
@@ -206,6 +238,7 @@
     <script src="api-client.js"></script>
     <script src="password-toggle-fix.js"></script>
     <script src="codigoRegistro.js"></script>
+    <script src="toggle-guardian.js"></script>
     <script src="efectos.js"></script>
 </body>
 

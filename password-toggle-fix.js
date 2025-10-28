@@ -81,6 +81,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Intentar inicializar para el formulario de registro
     initPasswordToggle('registerPassword', 'registerTogglePassword');
     
+    // Intentar inicializar para el formulario de login
+    initPasswordToggle('loginPassword', 'togglePassword');
+    
     // Intentar inicializar para otros formularios comunes
     initPasswordToggle('password', 'togglePassword');
     initPasswordToggle('loginPassword', 'loginTogglePassword');

@@ -16,12 +16,25 @@
         
         .toggle-password {
             position: absolute;
-            right: 10px;
+            right: 15px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
-            font-size: 18px;
+            font-size: 20px;
             z-index: 10;
+            color: #6c757d;
+            transition: color 0.3s ease;
+            user-select: none;
+            padding: 5px;
+        }
+        
+        .toggle-password:hover {
+            color: #495057;
+        }
+        
+        .input-container input[type="password"],
+        .input-container input[type="text"] {
+            padding-right: 50px;
         }
         
         #requirements-list p {
@@ -116,13 +129,17 @@
                                       placeholder="Tu dirección completa" class="form-control" rows="2"></textarea>
                         </div>
                         
-                        <div class="input-container mb-4">
+                        <div class="mb-4">
                             <label for="registerPassword" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
                                 🔐 Contraseña:
                             </label>
-                            <input type="password" id="registerPassword" name="registerPassword" 
-                                   class="form-control" placeholder="Crea una contraseña segura" required>
-                            <span class="toggle-password" id="registerTogglePassword">👁️</span>
+                            <div class="input-group">
+                                <input type="password" id="registerPassword" name="registerPassword" 
+                                       class="form-control" placeholder="Crea una contraseña segura" required>
+                                <button class="btn btn-outline-secondary" type="button" id="registerTogglePassword" title="Mostrar contraseña">
+                                    <i class="bi bi-eye" id="passwordIcon"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div id="requirements-list" class="mb-4">
@@ -153,6 +170,7 @@
     </div>
     <!-- Scripts -->
     <script src="api-client.js"></script>
+    <script src="password-toggle-fix.js"></script>
     <script src="codigoRegistro.js"></script>
     <script src="efectos.js"></script>
 </body>

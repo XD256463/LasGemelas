@@ -21,12 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
             reqLength: !!reqLength,
             reqDigit: !!reqDigit,
             reqUppercase: !!reqUppercase,
-            reqSpecial: !!reqSpecial
+            reqSpecial: !!reqSpecial,
+            toggleIcon: !!toggleIcon
         });
         return;
     }
 
-    console.log('Todos los elementos encontrados correctamente');
+    console.log('Todos los elementos encontrados correctamente:', {
+        passwordInput: !!passwordInput,
+        toggleIcon: !!toggleIcon,
+        toggleIconText: toggleIcon ? toggleIcon.textContent : 'N/A'
+    });
 
     // Validar nombre
     const validateName = () => {
@@ -118,11 +123,50 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Toggle para mostrar/ocultar contraseña
-    toggleIcon.addEventListener('click', () => {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        toggleIcon.textContent = type === 'password' ? '👁️' : '🔒';
-    });
+    if (toggleIcon && passwordInput) {
+        const passwordIcon = document.getElementById('passwordIcon');
+        
+        toggleIcon.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevenir submit del formulario
+            console.log('Toggle password clicked'); // Debug
+            
+            const isPassword = passwordInput.type === 'password';
+            
+            // Cambiar tipo de input
+            passwordInput.type = isPassword ? 'text' : 'password';
+            
+            // Cambiar icono y título
+            if (passwordIcon) {
+                if (isPassword) {
+                    passwordIcon.className = 'bi bi-eye-slash';
+                    toggleIcon.title = 'Ocultar contraseña';
+                } else {
+                    passwordIcon.className = 'bi bi-eye';
+                    toggleIcon.title = 'Mostrar contraseña';
+                }
+            } else {
+                // Fallback para emoji si no hay Bootstrap Icons
+                if (isPassword) {
+                    toggleIcon.innerHTML = '🙈';
+                    toggleIcon.title = 'Ocultar contraseña';
+                } else {
+                    toggleIcon.innerHTML = '👁️';
+                    toggleIcon.title = 'Mostrar contraseña';
+                }
+            }
+            
+            console.log('Password type changed to:', passwordInput.type); // Debug
+        });
+        
+        // Configurar estado inicial
+        toggleIcon.title = 'Mostrar contraseña';
+        console.log('Password toggle initialized successfully');
+    } else {
+        console.error('Toggle icon or password input not found:', {
+            toggleIcon: !!toggleIcon,
+            passwordInput: !!passwordInput
+        });
+    }
 
     // Event listeners para validación en tiempo real
     nameInput.addEventListener('input', validateForm);

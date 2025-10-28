@@ -97,40 +97,69 @@
                 </div>
             </div>
 
-            <!-- Estadísticas -->
-            <div class="row" id="statsSection">
-                <div class="col-md-3">
+            <!-- Navegación de Secciones -->
+            <div class="p-3 border-bottom">
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-light active" onclick="showSection('usuarios')" id="btnUsuarios">
+                        <i class="bi bi-people"></i> Usuarios
+                    </button>
+                    <button type="button" class="btn btn-outline-light" onclick="showSection('facturas')" id="btnFacturas">
+                        <i class="bi bi-receipt"></i> Facturas
+                    </button>
+                    <button type="button" class="btn btn-outline-light" onclick="showSection('estadisticas')" id="btnEstadisticas">
+                        <i class="bi bi-bar-chart"></i> Estadísticas
+                    </button>
+                </div>
+            </div>
+
+            <!-- Estadísticas Generales -->
+            <div class="row p-3" id="generalStats">
+                <div class="col-md-2">
                     <div class="stats-card">
                         <i class="bi bi-people fs-1"></i>
                         <h3 id="totalUsers">-</h3>
-                        <p>Total Usuarios</p>
+                        <p>Usuarios</p>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <div class="stats-card">
+                        <i class="bi bi-receipt fs-1"></i>
+                        <h3 id="totalFacturas">-</h3>
+                        <p>Facturas</p>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <div class="stats-card">
                         <i class="bi bi-calendar-day fs-1"></i>
                         <h3 id="todayUsers">-</h3>
-                        <p>Registros Hoy</p>
+                        <p>Hoy</p>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="stats-card">
                         <i class="bi bi-calendar-week fs-1"></i>
                         <h3 id="weekUsers">-</h3>
-                        <p>Esta Semana</p>
+                        <p>Semana</p>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <div class="stats-card">
+                        <i class="bi bi-currency-dollar fs-1"></i>
+                        <h3 id="totalMonto">-</h3>
+                        <p>Total $</p>
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <div class="stats-card">
                         <i class="bi bi-clock-history fs-1"></i>
                         <h3 id="lastUpdate">-</h3>
-                        <p>Última Actualización</p>
+                        <p>Actualizado</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Controles -->
-            <div class="p-4">
+            <!-- SECCIÓN USUARIOS -->
+            <div class="p-4" id="usuariosSection">
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="input-group">
@@ -146,13 +175,12 @@
                         <button class="btn btn-outline-secondary me-2" onclick="loadUsers()">
                             <i class="bi bi-arrow-clockwise"></i> Actualizar
                         </button>
-                        <button class="btn btn-outline-info" onclick="loadStats()">
-                            <i class="bi bi-bar-chart"></i> Estadísticas
+                        <button class="btn btn-outline-success" onclick="exportUsers()">
+                            <i class="bi bi-download"></i> Exportar
                         </button>
                     </div>
                 </div>
 
-                <!-- Tabla de Usuarios -->
                 <div class="table-responsive">
                     <table class="table table-striped user-table">
                         <thead class="table-dark">
@@ -177,11 +205,112 @@
                     </table>
                 </div>
 
-                <!-- Paginación -->
                 <nav>
-                    <ul class="pagination justify-content-center" id="pagination">
+                    <ul class="pagination justify-content-center" id="usersPagination">
                     </ul>
                 </nav>
+            </div>
+
+            <!-- SECCIÓN FACTURAS -->
+            <div class="p-4 hidden" id="facturasSection">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="searchFacturas" placeholder="Buscar facturas...">
+                            <button class="btn btn-outline-secondary" onclick="searchFacturas()">Buscar</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="filterEstado" onchange="filterByEstado()">
+                            <option value="">Todos los estados</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="pagada">Pagada</option>
+                            <option value="vencida">Vencida</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-tech me-2" onclick="showCreateFacturaModal()">
+                            <i class="bi bi-plus-circle"></i> Nueva Factura
+                        </button>
+                        <button class="btn btn-outline-secondary me-2" onclick="loadFacturas()">
+                            <i class="bi bi-arrow-clockwise"></i> Actualizar
+                        </button>
+                        <button class="btn btn-outline-success" onclick="exportFacturas()">
+                            <i class="bi bi-download"></i> Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Número</th>
+                                <th>Cliente</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="facturasTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <nav>
+                    <ul class="pagination justify-content-center" id="facturasPagination">
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- SECCIÓN ESTADÍSTICAS -->
+            <div class="p-4 hidden" id="estadisticasSection">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-pie-chart"></i> Facturas por Estado</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="estadoChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-bar-chart"></i> Top Clientes</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="topClientesTable"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="bi bi-graph-up"></i> Resumen Mensual</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="resumenMensual"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -232,6 +361,74 @@
         </div>
     </div>
 
+    <!-- Modal Crear/Editar Factura -->
+    <div class="modal fade" id="facturaModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header modal-header-tech">
+                    <h5 class="modal-title" id="facturaModalTitle">
+                        <i class="bi bi-receipt-cutoff"></i> Nueva Factura
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="facturaForm">
+                        <input type="hidden" id="facturaId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="facturaCliente" class="form-label">Cliente *</label>
+                                    <select class="form-select" id="facturaCliente" required>
+                                        <option value="">Seleccionar cliente...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="facturaNumero" class="form-label">Número de Factura *</label>
+                                    <input type="text" class="form-control" id="facturaNumero" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="facturaMonto" class="form-label">Monto *</label>
+                                    <input type="number" class="form-control" id="facturaMonto" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="facturaEstado" class="form-label">Estado</label>
+                                    <select class="form-select" id="facturaEstado">
+                                        <option value="pendiente">Pendiente</option>
+                                        <option value="pagada">Pagada</option>
+                                        <option value="vencida">Vencida</option>
+                                        <option value="cancelada">Cancelada</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="facturaDescripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="facturaDescripcion" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="facturaVencimiento" class="form-label">Fecha de Vencimiento</label>
+                            <input type="date" class="form-control" id="facturaVencimiento">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-tech" onclick="saveFactura()">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Confirmar Eliminación -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog">
@@ -243,11 +440,11 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p>¿Estás seguro de que quieres eliminar este usuario?</p>
+                    <p id="deleteMessage">¿Estás seguro de que quieres eliminar este elemento?</p>
                     <div class="alert alert-warning">
                         <strong>Advertencia:</strong> Esta acción no se puede deshacer.
                     </div>
-                    <div id="deleteUserInfo"></div>
+                    <div id="deleteInfo"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -264,7 +461,15 @@
         let currentTechCode = '';
         let currentPage = 1;
         let currentSearch = '';
+        let currentSection = 'usuarios';
         let userToDelete = null;
+        let facturaToDelete = null;
+        let deleteType = 'user'; // 'user' o 'factura'
+        
+        // Variables para facturas
+        let currentFacturasPage = 1;
+        let currentFacturasSearch = '';
+        let currentEstadoFilter = '';
 
         // Autenticación
         async function authenticateTech() {
@@ -309,20 +514,59 @@
             document.getElementById('techCode').value = '';
         }
 
-        // Cargar estadísticas
+        // Mostrar sección
+        function showSection(section) {
+            // Ocultar todas las secciones
+            document.getElementById('usuariosSection').classList.add('hidden');
+            document.getElementById('facturasSection').classList.add('hidden');
+            document.getElementById('estadisticasSection').classList.add('hidden');
+            
+            // Remover clase active de todos los botones
+            document.getElementById('btnUsuarios').classList.remove('active');
+            document.getElementById('btnFacturas').classList.remove('active');
+            document.getElementById('btnEstadisticas').classList.remove('active');
+            
+            // Mostrar sección seleccionada
+            currentSection = section;
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            document.getElementById('btn' + section.charAt(0).toUpperCase() + section.slice(1)).classList.add('active');
+            
+            // Cargar datos según la sección
+            switch(section) {
+                case 'usuarios':
+                    loadUsers();
+                    break;
+                case 'facturas':
+                    loadFacturas();
+                    loadClientesSelect();
+                    break;
+                case 'estadisticas':
+                    loadEstadisticasCompletas();
+                    break;
+            }
+        }
+
+        // Cargar estadísticas generales
         async function loadStats() {
             try {
-                const response = await fetch('/api/tech/stats', {
-                    headers: { 'techCode': currentTechCode }
-                });
+                const [userStats, facturaStats] = await Promise.all([
+                    fetch('/api/tech/stats', { headers: { 'techCode': currentTechCode } }),
+                    fetch('/api/tech/facturas-stats', { headers: { 'techCode': currentTechCode } })
+                ]);
                 
-                if (response.ok) {
-                    const result = await response.json();
-                    const stats = result.data;
+                if (userStats.ok && facturaStats.ok) {
+                    const users = await userStats.json();
+                    const facturas = await facturaStats.json();
                     
-                    document.getElementById('totalUsers').textContent = stats.totalUsuarios;
-                    document.getElementById('todayUsers').textContent = stats.usuariosHoy;
-                    document.getElementById('weekUsers').textContent = stats.usuariosSemana;
+                    document.getElementById('totalUsers').textContent = users.data.totalUsuarios;
+                    document.getElementById('todayUsers').textContent = users.data.usuariosHoy;
+                    document.getElementById('weekUsers').textContent = users.data.usuariosSemana;
+                    document.getElementById('totalFacturas').textContent = facturas.data.totalFacturas;
+                    
+                    // Calcular total de montos
+                    const totalMonto = facturas.data.estadisticas.reduce((sum, est) => sum + (parseFloat(est.total_monto) || 0), 0);
+                    document.getElementById('totalMonto').textContent = '$' + totalMonto.toLocaleString();
+                    
                     document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 }
             } catch (error) {
@@ -381,8 +625,9 @@
             `).join('');
         }
 
-        function displayPagination(pagination) {
-            const paginationEl = document.getElementById('pagination');
+        function displayPagination(pagination, type = 'users') {
+            const paginationEl = document.getElementById(type === 'users' ? 'usersPagination' : 'facturasPagination');
+            const loadFunction = type === 'users' ? 'loadUsers' : 'loadFacturas';
             
             if (pagination.pages <= 1) {
                 paginationEl.innerHTML = '';
@@ -393,14 +638,14 @@
             
             // Anterior
             html += `<li class="page-item ${pagination.page === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="loadUsers(${pagination.page - 1})">Anterior</a>
+                <a class="page-link" href="#" onclick="${loadFunction}(${pagination.page - 1})">Anterior</a>
             </li>`;
             
             // Páginas
             for (let i = 1; i <= pagination.pages; i++) {
                 if (i === pagination.page || i === 1 || i === pagination.pages || (i >= pagination.page - 1 && i <= pagination.page + 1)) {
                     html += `<li class="page-item ${i === pagination.page ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="loadUsers(${i})">${i}</a>
+                        <a class="page-link" href="#" onclick="${loadFunction}(${i})">${i}</a>
                     </li>`;
                 } else if (i === pagination.page - 2 || i === pagination.page + 2) {
                     html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
@@ -409,10 +654,196 @@
             
             // Siguiente
             html += `<li class="page-item ${pagination.page === pagination.pages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="loadUsers(${pagination.page + 1})">Siguiente</a>
+                <a class="page-link" href="#" onclick="${loadFunction}(${pagination.page + 1})">Siguiente</a>
             </li>`;
             
             paginationEl.innerHTML = html;
+        }
+
+        // ========== FUNCIONES PARA FACTURAS ==========
+        
+        // Cargar facturas
+        async function loadFacturas(page = 1) {
+            currentFacturasPage = page;
+            const tbody = document.getElementById('facturasTableBody');
+            
+            try {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+                
+                const response = await fetch(`/api/tech/facturas?page=${page}&limit=10&search=${currentFacturasSearch}`, {
+                    headers: { 'techCode': currentTechCode }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    displayFacturas(result.data);
+                    displayPagination(result.pagination, 'facturas');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error cargando facturas</td></tr>';
+                }
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error de conexión</td></tr>';
+            }
+        }
+
+        function displayFacturas(facturas) {
+            const tbody = document.getElementById('facturasTableBody');
+            
+            if (facturas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron facturas</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = facturas.map(factura => {
+                const estadoClass = {
+                    'pendiente': 'warning',
+                    'pagada': 'success',
+                    'vencida': 'danger',
+                    'cancelada': 'secondary'
+                }[factura.estado] || 'secondary';
+                
+                return `
+                    <tr>
+                        <td>${factura.id}</td>
+                        <td>${factura.numero_factura}</td>
+                        <td>${factura.cliente_nombre || 'Sin cliente'}</td>
+                        <td>$${parseFloat(factura.monto).toLocaleString()}</td>
+                        <td><span class="badge bg-${estadoClass}">${factura.estado}</span></td>
+                        <td>${new Date(factura.fecha_factura).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editFactura(${factura.id})" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="showDeleteFacturaModal(${factura.id}, '${factura.numero_factura}')" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Buscar facturas
+        function searchFacturas() {
+            currentFacturasSearch = document.getElementById('searchFacturas').value.trim();
+            loadFacturas(1);
+        }
+
+        // Filtrar por estado
+        function filterByEstado() {
+            currentEstadoFilter = document.getElementById('filterEstado').value;
+            loadFacturas(1);
+        }
+
+        // Cargar clientes para el select
+        async function loadClientesSelect() {
+            try {
+                const response = await fetch('/api/tech/usuarios?limit=1000', {
+                    headers: { 'techCode': currentTechCode }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const select = document.getElementById('facturaCliente');
+                    
+                    select.innerHTML = '<option value="">Seleccionar cliente...</option>' +
+                        result.data.map(user => 
+                            `<option value="${user.id}">${user.nombre} (${user.email})</option>`
+                        ).join('');
+                }
+            } catch (error) {
+                console.error('Error cargando clientes:', error);
+            }
+        }
+
+        // Crear factura
+        function showCreateFacturaModal() {
+            document.getElementById('facturaModalTitle').innerHTML = '<i class="bi bi-receipt-cutoff"></i> Nueva Factura';
+            document.getElementById('facturaForm').reset();
+            document.getElementById('facturaId').value = '';
+            new bootstrap.Modal(document.getElementById('facturaModal')).show();
+        }
+
+        // Editar factura
+        async function editFactura(id) {
+            try {
+                const response = await fetch(`/api/tech/facturas/${id}`, {
+                    headers: { 'techCode': currentTechCode }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const factura = result.data;
+                    
+                    document.getElementById('facturaModalTitle').innerHTML = '<i class="bi bi-pencil"></i> Editar Factura';
+                    document.getElementById('facturaId').value = factura.id;
+                    document.getElementById('facturaCliente').value = factura.cliente_id;
+                    document.getElementById('facturaNumero').value = factura.numero_factura;
+                    document.getElementById('facturaMonto').value = factura.monto;
+                    document.getElementById('facturaEstado').value = factura.estado;
+                    document.getElementById('facturaDescripcion').value = factura.descripcion || '';
+                    document.getElementById('facturaVencimiento').value = factura.fecha_vencimiento ? factura.fecha_vencimiento.split('T')[0] : '';
+                    
+                    new bootstrap.Modal(document.getElementById('facturaModal')).show();
+                }
+            } catch (error) {
+                alert('Error cargando factura');
+            }
+        }
+
+        // Guardar factura
+        async function saveFactura() {
+            const form = document.getElementById('facturaForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const facturaId = document.getElementById('facturaId').value;
+            const facturaData = {
+                cliente_id: document.getElementById('facturaCliente').value,
+                numero_factura: document.getElementById('facturaNumero').value.trim(),
+                monto: parseFloat(document.getElementById('facturaMonto').value),
+                estado: document.getElementById('facturaEstado').value,
+                descripcion: document.getElementById('facturaDescripcion').value.trim(),
+                fecha_vencimiento: document.getElementById('facturaVencimiento').value || null
+            };
+            
+            try {
+                const url = facturaId ? `/api/tech/facturas/${facturaId}` : '/api/tech/facturas';
+                const method = facturaId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'techCode': currentTechCode
+                    },
+                    body: JSON.stringify(facturaData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('facturaModal')).hide();
+                    loadFacturas(currentFacturasPage);
+                    loadStats();
+                    alert(result.message);
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                alert('Error guardando factura');
+            }
+        }
+
+        // Eliminar factura
+        function showDeleteFacturaModal(id, numero) {
+            facturaToDelete = id;
+            deleteType = 'factura';
+            document.getElementById('deleteMessage').textContent = '¿Estás seguro de que quieres eliminar esta factura?';
+            document.getElementById('deleteInfo').innerHTML = `<strong>Factura:</strong> ${numero}`;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
         }
 
         // Buscar usuarios
@@ -509,7 +940,9 @@
         // Eliminar usuario
         function showDeleteModal(id, nombre, email) {
             userToDelete = id;
-            document.getElementById('deleteUserInfo').innerHTML = `
+            deleteType = 'user';
+            document.getElementById('deleteMessage').textContent = '¿Estás seguro de que quieres eliminar este usuario?';
+            document.getElementById('deleteInfo').innerHTML = `
                 <strong>Usuario:</strong> ${nombre}<br>
                 <strong>Email:</strong> ${email}
             `;
@@ -517,29 +950,199 @@
         }
 
         async function confirmDelete() {
-            if (!userToDelete) return;
-            
             try {
-                const response = await fetch(`/api/tech/usuarios/${userToDelete}`, {
-                    method: 'DELETE',
-                    headers: { 'techCode': currentTechCode }
-                });
+                let response, result;
                 
-                const result = await response.json();
+                if (deleteType === 'user' && userToDelete) {
+                    response = await fetch(`/api/tech/usuarios/${userToDelete}`, {
+                        method: 'DELETE',
+                        headers: { 'techCode': currentTechCode }
+                    });
+                } else if (deleteType === 'factura' && facturaToDelete) {
+                    response = await fetch(`/api/tech/facturas/${facturaToDelete}`, {
+                        method: 'DELETE',
+                        headers: { 'techCode': currentTechCode }
+                    });
+                }
                 
-                if (response.ok) {
-                    bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-                    loadUsers(currentPage);
-                    loadStats();
-                    alert(result.message);
-                } else {
-                    alert(result.error);
+                if (response) {
+                    result = await response.json();
+                    
+                    if (response.ok) {
+                        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                        
+                        if (deleteType === 'user') {
+                            loadUsers(currentPage);
+                        } else {
+                            loadFacturas(currentFacturasPage);
+                        }
+                        
+                        loadStats();
+                        alert(result.message);
+                    } else {
+                        alert(result.error);
+                    }
                 }
             } catch (error) {
-                alert('Error eliminando usuario');
+                alert('Error eliminando elemento');
             }
             
             userToDelete = null;
+            facturaToDelete = null;
+        }
+
+        // ========== FUNCIONES DE EXPORTACIÓN ==========
+        
+        function exportUsers() {
+            exportToCSV('usuarios', 'usuarios.csv');
+        }
+
+        function exportFacturas() {
+            exportToCSV('facturas', 'facturas.csv');
+        }
+
+        async function exportToCSV(type, filename) {
+            try {
+                const endpoint = type === 'usuarios' ? '/api/tech/usuarios?limit=10000' : '/api/tech/facturas?limit=10000';
+                const response = await fetch(endpoint, {
+                    headers: { 'techCode': currentTechCode }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    let csvContent = '';
+                    
+                    if (type === 'usuarios') {
+                        csvContent = 'ID,Nombre,Email,Teléfono,Dirección,Fecha Registro\n';
+                        csvContent += result.data.map(user => 
+                            `${user.id},"${user.nombre}","${user.email}","${user.telefono || ''}","${user.direccion || ''}","${user.fecha_registro}"`
+                        ).join('\n');
+                    } else {
+                        csvContent = 'ID,Número,Cliente,Email Cliente,Monto,Estado,Descripción,Fecha Factura,Fecha Vencimiento\n';
+                        csvContent += result.data.map(factura => 
+                            `${factura.id},"${factura.numero_factura}","${factura.cliente_nombre || ''}","${factura.cliente_email || ''}",${factura.monto},"${factura.estado}","${factura.descripcion || ''}","${factura.fecha_factura}","${factura.fecha_vencimiento || ''}"`
+                        ).join('\n');
+                    }
+                    
+                    downloadCSV(csvContent, filename);
+                }
+            } catch (error) {
+                alert('Error exportando datos');
+            }
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ========== ESTADÍSTICAS COMPLETAS ==========
+        
+        async function loadEstadisticasCompletas() {
+            try {
+                const response = await fetch('/api/tech/facturas-stats', {
+                    headers: { 'techCode': currentTechCode }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const stats = result.data;
+                    
+                    // Mostrar estadísticas por estado
+                    displayEstadoChart(stats.estadisticas);
+                    
+                    // Mostrar top clientes
+                    displayTopClientes(stats.topClientes);
+                    
+                    // Mostrar resumen mensual
+                    displayResumenMensual(stats.mesActual);
+                }
+            } catch (error) {
+                console.error('Error cargando estadísticas completas:', error);
+            }
+        }
+
+        function displayEstadoChart(estadisticas) {
+            const chartContainer = document.getElementById('estadoChart').parentElement;
+            chartContainer.innerHTML = '<canvas id="estadoChart" width="400" height="200"></canvas>';
+            
+            // Crear gráfico simple con HTML/CSS
+            let html = '<div class="row">';
+            estadisticas.forEach(est => {
+                const percentage = (est.cantidad / estadisticas.reduce((sum, e) => sum + e.cantidad, 0) * 100).toFixed(1);
+                html += `
+                    <div class="col-6 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>${est.estado}</span>
+                            <span>${est.cantidad}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: ${percentage}%">${percentage}%</div>
+                        </div>
+                        <small class="text-muted">$${parseFloat(est.total_monto || 0).toLocaleString()}</small>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            chartContainer.innerHTML = html;
+        }
+
+        function displayTopClientes(topClientes) {
+            const container = document.getElementById('topClientesTable');
+            
+            if (topClientes.length === 0) {
+                container.innerHTML = '<p class="text-muted">No hay datos de clientes</p>';
+                return;
+            }
+            
+            let html = '<div class="table-responsive"><table class="table table-sm">';
+            html += '<thead><tr><th>Cliente</th><th>Facturas</th><th>Total</th></tr></thead><tbody>';
+            
+            topClientes.forEach(cliente => {
+                html += `
+                    <tr>
+                        <td>${cliente.nombre}</td>
+                        <td>${cliente.total_facturas}</td>
+                        <td>$${parseFloat(cliente.total_monto).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function displayResumenMensual(mesActual) {
+            const container = document.getElementById('resumenMensual');
+            
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h3>${mesActual.total || 0}</h3>
+                                <p>Facturas este mes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>$${parseFloat(mesActual.total_monto || 0).toLocaleString()}</h3>
+                                <p>Ingresos este mes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // Utilidades
@@ -558,6 +1161,17 @@
             if (e.key === 'Enter') {
                 searchUsers();
             }
+        });
+
+        document.getElementById('searchFacturas').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchFacturas();
+            }
+        });
+
+        // Inicialización al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('usuarios');
         });
     </script>
 </body>

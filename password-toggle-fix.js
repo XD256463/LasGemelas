@@ -13,8 +13,12 @@ function initPasswordToggle(passwordInputId, toggleButtonId) {
         return false;
     }
     
-    toggleButton.addEventListener('click', function(e) {
-        e.preventDefault();
+    // Función principal de toggle
+    function togglePassword(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         
         const isPassword = passwordInput.type === 'password';
         passwordInput.type = isPassword ? 'text' : 'password';
@@ -42,11 +46,31 @@ function initPasswordToggle(passwordInputId, toggleButtonId) {
             }
         }
         
+        // Mantener foco en el input si lo tenía
+        if (document.activeElement === passwordInput) {
+            setTimeout(() => {
+                passwordInput.focus();
+                passwordInput.setSelectionRange(passwordInput.value.length, passwordInput.value.length);
+            }, 10);
+        }
+        
         console.log(`Password visibility toggled to: ${passwordInput.type}`);
+    }
+    
+    // Event listeners múltiples
+    toggleButton.addEventListener('click', togglePassword);
+    toggleButton.addEventListener('mousedown', function(e) {
+        e.preventDefault(); // Prevenir pérdida de foco
     });
     
-    // Configurar estado inicial
+    // Configurar propiedades del botón
     toggleButton.title = 'Mostrar contraseña';
+    toggleButton.setAttribute('tabindex', '-1');
+    toggleButton.disabled = false;
+    toggleButton.style.pointerEvents = 'auto';
+    toggleButton.style.opacity = '1';
+    toggleButton.style.cursor = 'pointer';
+    
     console.log('Password toggle initialized for:', passwordInputId);
     
     return true;

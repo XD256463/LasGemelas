@@ -122,31 +122,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Toggle para mostrar/ocultar contraseña
-    if (toggleIcon && passwordInput) {
+    // Toggle para mostrar/ocultar contraseña - Versión mejorada
+    function initPasswordToggle() {
+        if (!toggleIcon || !passwordInput) {
+            console.error('Toggle icon or password input not found:', {
+                toggleIcon: !!toggleIcon,
+                passwordInput: !!passwordInput
+            });
+            return;
+        }
+
         const passwordIcon = document.getElementById('passwordIcon');
         
-        toggleIcon.addEventListener('click', function(e) {
-            e.preventDefault(); // Prevenir submit del formulario
+        // Función para cambiar el estado del toggle
+        function togglePasswordVisibility(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
             console.log('Toggle password clicked'); // Debug
             
-            const isPassword = passwordInput.type === 'password';
+            const isCurrentlyPassword = passwordInput.type === 'password';
             
-            // Cambiar tipo de input
-            passwordInput.type = isPassword ? 'text' : 'password';
+            // Cambiar tipo de input SIEMPRE
+            passwordInput.type = isCurrentlyPassword ? 'text' : 'password';
             
-            // Cambiar icono y título
+            // Actualizar icono y título
+            updateToggleIcon(isCurrentlyPassword);
+            
+            console.log('Password type changed to:', passwordInput.type); // Debug
+            
+            // Mantener el foco en el input si tenía foco
+            if (document.activeElement === passwordInput) {
+                setTimeout(() => {
+                    passwordInput.focus();
+                    // Mover cursor al final
+                    passwordInput.setSelectionRange(passwordInput.value.length, passwordInput.value.length);
+                }, 10);
+            }
+        }
+        
+        // Función para actualizar el icono
+        function updateToggleIcon(wasPassword) {
             if (passwordIcon) {
-                if (isPassword) {
+                if (wasPassword) {
                     passwordIcon.className = 'bi bi-eye-slash';
                     toggleIcon.title = 'Ocultar contraseña';
+                    toggleIcon.setAttribute('aria-label', 'Ocultar contraseña');
                 } else {
                     passwordIcon.className = 'bi bi-eye';
                     toggleIcon.title = 'Mostrar contraseña';
+                    toggleIcon.setAttribute('aria-label', 'Mostrar contraseña');
                 }
             } else {
                 // Fallback para emoji si no hay Bootstrap Icons
-                if (isPassword) {
+                if (wasPassword) {
                     toggleIcon.innerHTML = '🙈';
                     toggleIcon.title = 'Ocultar contraseña';
                 } else {
@@ -154,19 +185,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     toggleIcon.title = 'Mostrar contraseña';
                 }
             }
-            
-            console.log('Password type changed to:', passwordInput.type); // Debug
+        }
+        
+        // Agregar event listeners múltiples para mayor compatibilidad
+        toggleIcon.addEventListener('click', togglePasswordVisibility);
+        toggleIcon.addEventListener('mousedown', function(e) {
+            e.preventDefault(); // Prevenir que el input pierda el foco
+        });
+        
+        // Prevenir que el botón tome el foco
+        toggleIcon.addEventListener('focus', function(e) {
+            e.preventDefault();
+            passwordInput.focus();
         });
         
         // Configurar estado inicial
         toggleIcon.title = 'Mostrar contraseña';
-        console.log('Password toggle initialized successfully');
-    } else {
-        console.error('Toggle icon or password input not found:', {
-            toggleIcon: !!toggleIcon,
-            passwordInput: !!passwordInput
-        });
+        toggleIcon.setAttribute('aria-label', 'Mostrar contraseña');
+        toggleIcon.setAttribute('tabindex', '-1'); // Evitar que reciba foco con Tab
+        
+        // Asegurar que el botón siempre esté habilitado
+        toggleIcon.disabled = false;
+        toggleIcon.style.pointerEvents = 'auto';
+        toggleIcon.style.opacity = '1';
+        
+        console.log('Password toggle initialized successfully with enhanced functionality');
+        
+        // Función global para testing
+        window.testPasswordToggle = togglePasswordVisibility;
     }
+    
+    // Inicializar el toggle
+    initPasswordToggle();
+    
+    // Re-inicializar si los elementos no estaban listos
+    setTimeout(() => {
+        if (!toggleIcon || !passwordInput) {
+            console.log('Retrying password toggle initialization...');
+            initPasswordToggle();
+        }
+    }, 100);
 
     // Event listeners para validación en tiempo real
     nameInput.addEventListener('input', validateForm);

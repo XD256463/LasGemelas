@@ -76,6 +76,40 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+        
+        /* Estilos específicos para el toggle de contraseña */
+        #registerTogglePassword {
+            border-left: none !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            cursor: pointer !important;
+        }
+        
+        #registerTogglePassword:hover {
+            background-color: #e9ecef !important;
+            border-color: #ced4da !important;
+        }
+        
+        #registerTogglePassword:focus {
+            box-shadow: none !important;
+            border-color: #ced4da !important;
+        }
+        
+        #registerTogglePassword:active {
+            background-color: #dee2e6 !important;
+            border-color: #ced4da !important;
+        }
+        
+        /* Asegurar que el input group funcione correctamente */
+        .input-group > .form-control:not(:last-child) {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        
+        .input-group > .btn:not(:first-child) {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
     </style>
 </head>
 

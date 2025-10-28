@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Las Gemelas - Finalizar Compra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body class="page-loader">
+    <div class="logo-principal efecto-flotar particulas">
+        Las Gemelas
+    </div>
+    <div class="deslizar">
+        <h5>
+            "Finalizando tu compra mágica" 🎭✨🛒
+        </h5>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <span>Finalizando Compra</span>
+            <div class="collapse navbar-collapse centrar" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="catalogo.html">← Volver al Catálogo</a>
+                    </li>
+                </ul>
+            </div>
+            <span class="me-2">USUARIO</span>
+            <a class="navbar-brand">
+                <img src="img/perfil.png" alt="Perfil" width="40" height="40" class="rounded-pill">
+            </a>
+            <a href="index.html" class="btn btn-outline-danger">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <br><br>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h2 class="text-center mb-4" style="color: var(--color-primario); font-family: 'Fredoka One', cursive;">
+                    🛒 Resumen de tu Compra 🛒
+                </h2>
+                
+                <div class="caja2 fade-in-up">
+                    <div class="caja3">
+                        <div id="checkoutItems" class="mb-4">
+                            <!-- Los productos se cargarán aquí -->
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4 style="color: var(--color-primario);">💰 Resumen del Pedido</h4>
+                                <div class="bg-light p-3 rounded">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal:</span>
+                                        <span id="subtotal">S/.0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Descuento:</span>
+                                        <span class="text-success">-S/.0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total a Pagar:</strong>
+                                        <strong id="totalAmount" style="color: var(--color-primario); font-size: 1.2em;">S/.0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h4 style="color: var(--color-primario);">📋 Información de Entrega</h4>
+                                <div class="bg-light p-3 rounded">
+                                    <p><strong>Método:</strong> Recojo en tienda</p>
+                                    <p><strong>Dirección:</strong> Av. Principal 123, Lima</p>
+                                    <p><strong>Horario:</strong> Lun-Sáb 9:00 AM - 8:00 PM</p>
+                                    <p><strong>Teléfono:</strong> (01) 123-4567</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="text-center">
+                            <button class="btn btn-success btn-lg me-3" id="finalizeOrder">
+                                ✅ Finalizar Compra
+                            </button>
+                            <a href="catalogo.html" class="btn btn-secondary btn-lg">
+                                ← Seguir Comprando
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">🎉 ¡Compra Realizada!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4>¡Gracias por tu compra!</h4>
+                    <p>Tu pedido ha sido procesado exitosamente.</p>
+                    <p><strong>Número de Orden:</strong> <span id="orderNumber"></span></p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-primary" id="downloadPDF">
+                        📄 Descargar Ticket PDF
+                    </button>
+                    <button type="button" class="btn btn-success" id="printTicketBtn">
+                        🖨️ Imprimir Ticket
+                    </button>
+                    <a href="catalogo.html" class="btn btn-secondary">
+                        Volver al Catálogo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script src="checkout.js"></script>
+<script src="efectos.js"></script>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Las Gemelas - Registro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="registro-container page-loader">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="logo-principal efecto-flotar particulas">Las Gemelas</div>
+                <div class="text-center mb-4">
+                    <h2 style="color: var(--color-primario); font-family: 'Fredoka One', cursive;">
+                        🎭 ¡Únete a nuestra familia de disfraces! 🎭
+                    </h2>
+                </div>
+            </div>
+            <div class="col-lg-6 col-md-8 col-sm-10">
+                <div class="caja3 fade-in-up">
+                    <form id="registerForm">
+                        <h3 style="color: var(--color-primario); margin-bottom: 30px;">
+                            ✨ Completa los requisitos ✨
+                        </h3>
+                        
+                        <div class="mb-4">
+                            <label for="registerUsername" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                🆔 Código de Usuario (U o T + números):
+                            </label>
+                            <input type="text" id="registerUsername" name="registerUsername" 
+                                   placeholder="Ej: U12345 o T54321" class="form-control" 
+                                   pattern="[UT]\d+" title="Debe empezar con U o T seguido de números" required>
+                            <div class="form-text" style="color: var(--color-primario);">
+                                💡 Usa U para usuarios normales o T para trabajadores
+                            </div>
+                        </div>
+                        
+                        <div class="input-container mb-4">
+                            <label for="registerPassword" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                🔐 Contraseña:
+                            </label>
+                            <input type="password" id="registerPassword" name="registerPassword" 
+                                   class="form-control" placeholder="Crea una contraseña segura" required>
+                            <span class="toggle-password" id="registerTogglePassword">👁️</span>
+                        </div>
+
+                        <div id="requirements-list" class="mb-4">
+                            <h5 style="color: var(--color-primario); margin-bottom: 15px;">📋 Requisitos de contraseña:</h5>
+                            <p id="reqLength" class="invalid">❌ 8 o más caracteres</p>
+                            <p id="reqDigit" class="invalid">❌ Mínimo un (1) dígito</p>
+                            <p id="reqUppercase" class="invalid">❌ Mínimo una (1) mayúscula</p>
+                            <p id="reqSpecial" class="invalid">❌ Mínimo un (1) carácter especial (? @ / ! # $ % & *)</p>
+                        </div>
+
+                        <p id="registerMessage" style="color: var(--color-secundario); font-weight: 600;"></p>
+                        
+                        <div class="text-center">
+                            <button type="submit" id="registerButton" class="btn btn-primary-custom" disabled>
+                                🎉 Registrar Cuenta 🎉
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <a href="index.html" style="color: var(--color-primario); text-decoration: none; font-weight: 500;">
+                                ¿Ya tienes cuenta? ¡Inicia sesión aquí! 🎭
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script src="codigoRegistro.js"></script>
+<script src="efectos.js"></script>

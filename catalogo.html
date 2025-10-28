@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Las Gemelas - Catálogo de Disfraces</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="page-loader">
+    <div class="logo-principal efecto-flotar particulas">
+        Las Gemelas
+    </div>
+    <div class="deslizar">
+        <h5>
+            "Todos los disfraces con las 3B: Bueno, Bonito y Barato" 🎭✨🎪
+        </h5>
+    </div>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <span>Bienvenido, Usuario </span>
+            <div class="collapse navbar-collapse centrar" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="catalogo.html">Catalogo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="testimonios.html">Testimonio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="contac.html">Contactanos</a>
+                    </li>
+                </ul>
+            </div>
+            <span class="me-2">USUARIO</span>
+            <button class="btn btn-outline-primary me-2" id="cartButton" data-bs-toggle="modal" data-bs-target="#cartModal">
+                🛒 Carrito (<span id="cartCount">0</span>)
+            </button>
+            <a class="navbar-brand">
+                <img src="img/perfil.png" alt="Perfil" width="40" height="40" class="rounded-pill">
+            </a>
+            <a href="index.html" class="btn btn-outline-danger">Cerrar Sesion</a>
+        </div>
+
+    </nav>
+    <br><br>
+    <div class="carousel-container">
+        <div class="carousel-track">
+            <div class="slide"><img src="img/Leon-Traje.jpg" alt="Slide1"></div>
+            <div class="slide"><img src="img/Nio-Traje1.jpg" alt="Slide2"></div>
+            <div class="slide"><img src="img/capibara.jpg" alt="Slide3"></div>
+        </div>
+
+        <button class="prev-button">❮</button>
+        <button class="next-button">❯</button>
+    </div>
+    <h2 class="text-center mb-4" style="color: var(--color-primario); font-family: 'Fredoka One', cursive;">
+        🎭 Nuestro Catálogo Mágico 🎭
+    </h2>
+    <div class="caja2 fade-in-up">
+        <div class="caja3">
+            <div class="row galeria">
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card particulas">
+                        <img src="img/guepardo-cata.JPG" class="card-img-top" alt="Disfraz de Guepardo">
+                        <div class="card-body">
+                            <h5 class="card-title">🐆 Disfraz de Guepardo</h5>
+                            <p class="card-text">
+                                <strong>Tallas:</strong> S/M/L<br>
+                                <strong>💰 Alquiler:</strong> S/.20<br>
+                                <strong>🛒 Venta:</strong> S/.45
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-sm add-to-cart" 
+                                        data-name="Disfraz de Guepardo" 
+                                        data-price="45" 
+                                        data-type="venta">
+                                    🛒 Comprar S/.45
+                                </button>
+                                <button class="btn btn-warning btn-sm add-to-cart" 
+                                        data-name="Disfraz de Guepardo" 
+                                        data-price="20" 
+                                        data-type="alquiler">
+                                    📅 Alquilar S/.20
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card particulas">
+                        <img src="img/mario-cata.JPG" class="card-img-top" alt="Disfraz de Mario Bros">
+                        <div class="card-body">
+                            <h5 class="card-title">🍄 Disfraz de Mario Bros</h5>
+                            <p class="card-text">
+                                <strong>Tallas:</strong> S/M<br>
+                                <strong>💰 Alquiler:</strong> S/.24<br>
+                                <strong>🛒 Venta:</strong> S/.55
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-sm add-to-cart" 
+                                        data-name="Disfraz de Mario Bros" 
+                                        data-price="55" 
+                                        data-type="venta">
+                                    🛒 Comprar S/.55
+                                </button>
+                                <button class="btn btn-warning btn-sm add-to-cart" 
+                                        data-name="Disfraz de Mario Bros" 
+                                        data-price="24" 
+                                        data-type="alquiler">
+                                    📅 Alquilar S/.24
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card particulas">
+                        <img src="img/michael-cata.JPG" class="card-img-top" alt="Disfraz de Michael Jackson">
+                        <div class="card-body">
+                            <h5 class="card-title">🕺 Disfraz de Michael Jackson</h5>
+                            <p class="card-text">
+                                <strong>Tallas:</strong> M/L<br>
+                                <strong>💰 Alquiler:</strong> S/.18<br>
+                                <strong>🛒 Venta:</strong> S/.72
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-sm add-to-cart" 
+                                        data-name="Disfraz de Michael Jackson" 
+                                        data-price="72" 
+                                        data-type="venta">
+                                    🛒 Comprar S/.72
+                                </button>
+                                <button class="btn btn-warning btn-sm add-to-cart" 
+                                        data-name="Disfraz de Michael Jackson" 
+                                        data-price="18" 
+                                        data-type="alquiler">
+                                    📅 Alquilar S/.18
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card particulas">
+                        <img src="img/princesa-cata.JPG" class="card-img-top" alt="Disfraz de Princesa">
+                        <div class="card-body">
+                            <h5 class="card-title">👑 Disfraz de Princesa</h5>
+                            <p class="card-text">
+                                <strong>Tallas:</strong> S/M/L<br>
+                                <strong>💰 Alquiler:</strong> S/.30<br>
+                                <strong>🛒 Venta:</strong> S/.35
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-sm add-to-cart" 
+                                        data-name="Disfraz de Princesa" 
+                                        data-price="35" 
+                                        data-type="venta">
+                                    🛒 Comprar S/.35
+                                </button>
+                                <button class="btn btn-warning btn-sm add-to-cart" 
+                                        data-name="Disfraz de Princesa" 
+                                        data-price="30" 
+                                        data-type="alquiler">
+                                    📅 Alquilar S/.30
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><br>
+            <div class="row">
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card particulas">
+                        <img src="img/roma-cata.JPG" class="card-img-top" alt="Disfraz de Romano">
+                        <div class="card-body">
+                            <h5 class="card-title">⚔️ Disfraz de Romano</h5>
+                            <p class="card-text">
+                                <strong>Tallas:</strong> M/L<br>
+                                <strong>💰 Alquiler:</strong> S/.45<br>
+                                <strong>🛒 Venta:</strong> S/.85
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-sm add-to-cart" 
+                                        data-name="Disfraz de Romano" 
+                                        data-price="85" 
+                                        data-type="venta">
+                                    🛒 Comprar S/.85
+                                </button>
+                                <button class="btn btn-warning btn-sm add-to-cart" 
+                                        data-name="Disfraz de Romano" 
+                                        data-price="45" 
+                                        data-type="alquiler">
+                                    📅 Alquilar S/.45
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card particulas">
+                        <img src="img/stich-cata.JPG" class="card-img-top" alt="Disfraz de Stitch">
+                        <div class="card-body">
+                            <h5 class="card-title">👽 Disfraz de Stitch</h5>
+                            <p class="card-text">
+                                <strong>Tallas:</strong> S/M/L<br>
+                                <strong>💰 Alquiler:</strong> S/.30<br>
+                                <strong>🛒 Venta:</strong> S/.55
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-sm add-to-cart" 
+                                        data-name="Disfraz de Stitch" 
+                                        data-price="55" 
+                                        data-type="venta">
+                                    🛒 Comprar S/.55
+                                </button>
+                                <button class="btn btn-warning btn-sm add-to-cart" 
+                                        data-name="Disfraz de Stitch" 
+                                        data-price="30" 
+                                        data-type="alquiler">
+                                    📅 Alquilar S/.30
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card particulas">
+                        <img src="img/corona-cata.JPG" class="card-img-top" alt="Corona">
+                        <div class="card-body">
+                            <h5 class="card-title">👑 Corona Real</h5>
+                            <p class="card-text">
+                                <strong>Tallas:</strong> S/M/L<br><br>
+                                <strong>🛒 Venta:</strong> S/.40 c/u
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-sm add-to-cart" 
+                                        data-name="Corona Real" 
+                                        data-price="40" 
+                                        data-type="venta">
+                                    🛒 Comprar S/.40
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-12">
+                    <div class="card particulas">
+                        <img src="img/monos-cata.JPG" class="card-img-top" alt="Moños abrazadores">
+                        <div class="card-body">
+                            <h5 class="card-title">🎀 Moños Abrazadores</h5>
+                            <p class="card-text">
+                                <strong>Tallas:</strong> S/M/L<br><br>
+                                <strong>🛒 Venta:</strong> S/.15 c/u
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-sm add-to-cart" 
+                                        data-name="Moños Abrazadores" 
+                                        data-price="15" 
+                                        data-type="venta">
+                                    🛒 Comprar S/.15
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal del Carrito -->
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cartModalLabel">🛒 Mi Carrito de Compras</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="cartItems">
+                        <p class="text-center text-muted">Tu carrito está vacío</p>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <h5>Total: <span id="cartTotal">S/.0.00</span></h5>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Seguir Comprando</button>
+                    <button type="button" class="btn btn-danger" id="clearCart">Vaciar Carrito</button>
+                    <button type="button" class="btn btn-success" id="checkout">Finalizar Compra</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal del Ticket -->
+    <div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ticketModalLabel">🎫 Ticket de Compra</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 10px;">
+                    <div id="ticketContent" class="text-center">
+                        <!-- El contenido del ticket se generará aquí -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="printTicket">🖨️ Imprimir Ticket</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script src="codigoCatalogo.js"></script>
+<script src="efectos.js"></script>

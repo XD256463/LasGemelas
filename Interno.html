@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Las Gemelas - Panel Técnico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="page-loader">
+    <div class="logo-principal efecto-flotar particulas">
+        Las Gemelas
+    </div>
+    <div class="deslizar">
+        <h5>
+            "Panel de Control Técnico - Reportes e Informes" 🔧📊💼
+        </h5>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <span>Bienvenido, Técnico </span>
+            <div class="collapse navbar-collapse centrar" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="Interno.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="#reportes">Reportes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="#ventas">Ventas</a>
+                    </li>
+                </ul>
+            </div>
+            <span class="me-2">TÉCNICO</span>
+            <a class="navbar-brand">
+                <img src="img/perfil.png" alt="Perfil" width="40" height="40" class="rounded-pill">
+            </a>
+            <a href="index.html" class="btn btn-outline-danger">Cerrar Sesión</a>
+        </div>
+    </nav>
+    
+    <br><br>
+    
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-center mb-4" style="color: var(--color-primario); font-family: 'Fredoka One', cursive;">
+                    🔧 Panel de Control Técnico 🔧
+                </h2>
+            </div>
+        </div>
+        
+        <div class="caja2 fade-in-up">
+            <div class="caja3">
+                <div class="row">
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="card particulas">
+                            <div class="card-header bg-primary text-white">
+                                <h5><i class="bi bi-graph-up"></i> Reportes de Ventas</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Ventas del Mes:</strong> S/. 2,450</p>
+                                <p><strong>Alquileres del Mes:</strong> S/. 1,320</p>
+                                <p><strong>Total Mensual:</strong> S/. 3,770</p>
+                                <button class="btn btn-primary">Ver Detalles</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="card particulas">
+                            <div class="card-header bg-success text-white">
+                                <h5><i class="bi bi-box-seam"></i> Inventario</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Disfraces Disponibles:</strong> 45</p>
+                                <p><strong>Disfraces Alquilados:</strong> 12</p>
+                                <p><strong>Accesorios:</strong> 28</p>
+                                <button class="btn btn-success">Gestionar Inventario</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="card particulas">
+                            <div class="card-header bg-warning text-dark">
+                                <h5><i class="bi bi-people"></i> Clientes</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Clientes Registrados:</strong> 156</p>
+                                <p><strong>Nuevos este Mes:</strong> 23</p>
+                                <p><strong>Clientes Frecuentes:</strong> 34</p>
+                                <button class="btn btn-warning">Ver Lista de Clientes</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="card particulas">
+                            <div class="card-header bg-info text-white">
+                                <h5><i class="bi bi-calendar-check"></i> Reservas</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Reservas Pendientes:</strong> 8</p>
+                                <p><strong>Reservas de Hoy:</strong> 3</p>
+                                <p><strong>Próximas Entregas:</strong> 5</p>
+                                <button class="btn btn-info">Gestionar Reservas</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script src="efectos.js"></script>

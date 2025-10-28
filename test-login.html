@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login - Las Gemelas</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-form { max-width: 400px; margin: 0 auto; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        .result { margin-top: 20px; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="test-form">
+        <h2>Test de Login - Las Gemelas</h2>
+        <form id="testForm">
+            <input type="text" id="testUsername" placeholder="Código de Usuario" required>
+            <input type="password" id="testPassword" placeholder="Contraseña" required>
+            <button type="submit">Probar Login</button>
+        </form>
+        <div id="result"></div>
+        
+        <h3>Credenciales de Prueba:</h3>
+        <p><strong>Usuario:</strong> U23201604 / Usuario123</p>
+        <p><strong>Técnico:</strong> T20137912 / Tecnico456</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const testForm = document.getElementById('testForm');
+            const testUsername = document.getElementById('testUsername');
+            const testPassword = document.getElementById('testPassword');
+            const result = document.getElementById('result');
+
+            // Cuentas de prueba
+            const accounts = {
+                "U23201604": { password: "Usuario123", role: "user" },
+                "T20137912": { password: "Tecnico456", role: "tech" }
+            };
+
+            testForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const username = testUsername.value.trim().toUpperCase();
+                const password = testPassword.value;
+                const account = accounts[username];
+
+                if (account && account.password === password) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        ✅ <strong>Login Exitoso!</strong><br>
+                        Usuario: ${username}<br>
+                        Rol: ${account.role}<br>
+                        Redirección: ${account.role === 'user' ? 'catalogo.html' : 'Interno.html'}
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        ❌ <strong>Login Fallido</strong><br>
+                        Usuario ingresado: "${username}"<br>
+                        Contraseña ingresada: "${password}"<br>
+                        Cuenta encontrada: ${account ? 'Sí' : 'No'}
+                    `;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login Issue - Las Gemelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .debug-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .log-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .status-good { color: #28a745; }
+        .status-bad { color: #dc3545; }
+        .status-warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="debug-container">
+            <h2 class="text-center mb-4">🐛 Debug Login Issue</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>🔍 Diagnóstico del Sistema</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="systemCheck">
+                                <p>🔄 Ejecutando diagnóstico...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>📊 Estado de Scripts</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="scriptsCheck">
+                                <p>🔄 Verificando scripts...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>📋 Log de Consola</h5>
+                </div>
+                <div class="card-body">
+                    <div id="consoleLog" class="log-output">
+                        Capturando logs de consola...
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="clearConsoleLog()">🗑️ Limpiar</button>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>🧪 Tests de Funcionalidad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100 mb-2" onclick="testOriginalLogin()">
+                                🔐 Test Login Original
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100 mb-2" onclick="testSimpleLogin()">
+                                ✅ Test Login Simple
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100 mb-2" onclick="testScripts()">
+                                📜 Test Scripts
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-warning w-100 mb-2" onclick="runAllTests()">
+                                🚀 Todos los Tests
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="index.html" class="btn btn-outline-primary me-2">🔐 Login Original</a>
+                <a href="index-simple.html" class="btn btn-outline-success me-2">✅ Login Simple</a>
+                <a href="test-login-toggle.html" class="btn btn-outline-info">🧪 Test Toggle</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let consoleMessages = [];
+        
+        // Interceptar console.log
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        console.log = function(...args) {
+            logToDebug('LOG', args.join(' '));
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            logToDebug('ERROR', args.join(' '));
+            originalError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            logToDebug('WARN', args.join(' '));
+            originalWarn.apply(console, args);
+        };
+        
+        function logToDebug(type, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            consoleMessages.push(`[${timestamp}] [${type}] ${message}`);
+            updateConsoleLog();
+        }
+        
+        function updateConsoleLog() {
+            const logDiv = document.getElementById('consoleLog');
+            logDiv.innerHTML = consoleMessages.slice(-50).join('<br>');
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearConsoleLog() {
+            consoleMessages = [];
+            updateConsoleLog();
+        }
+        
+        // Diagnóstico del sistema
+        function runSystemCheck() {
+            const systemDiv = document.getElementById('systemCheck');
+            let html = '';
+            
+            // Verificar elementos básicos
+            const elements = [
+                { id: 'loginForm', name: 'Formulario de Login' },
+                { id: 'loginUsername', name: 'Campo Usuario' },
+                { id: 'loginPassword', name: 'Campo Contraseña' },
+                { id: 'togglePassword', name: 'Botón Toggle' },
+                { id: 'errorMessage', name: 'Mensaje de Error' }
+            ];
+            
+            elements.forEach(el => {
+                const exists = document.getElementById(el.id) !== null;
+                const status = exists ? 'status-good' : 'status-bad';
+                const icon = exists ? '✅' : '❌';
+                html += `<p class="${status}">${icon} ${el.name}</p>`;
+            });
+            
+            // Verificar localStorage
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                html += '<p class="status-good">✅ LocalStorage</p>';
+            } catch (e) {
+                html += '<p class="status-bad">❌ LocalStorage</p>';
+            }
+            
+            // Verificar sessionStorage
+            try {
+                sessionStorage.setItem('test', 'test');
+                sessionStorage.removeItem('test');
+                html += '<p class="status-good">✅ SessionStorage</p>';
+            } catch (e) {
+                html += '<p class="status-bad">❌ SessionStorage</p>';
+            }
+            
+            systemDiv.innerHTML = html;
+        }
+        
+        // Verificar scripts
+        function runScriptsCheck() {
+            const scriptsDiv = document.getElementById('scriptsCheck');
+            let html = '';
+            
+            // Verificar scripts cargados
+            const scripts = [
+                'codigoIndex.js',
+                'codigoIndex-simple.js',
+                'api-client.js',
+                'password-toggle-fix.js',
+                'toggle-guardian.js',
+                'efectos.js'
+            ];
+            
+            scripts.forEach(script => {
+                const scriptElements = document.querySelectorAll(`script[src*="${script}"]`);
+                const loaded = scriptElements.length > 0;
+                const status = loaded ? 'status-good' : 'status-warning';
+                const icon = loaded ? '✅' : '⚠️';
+                html += `<p class="${status}">${icon} ${script}</p>`;
+            });
+            
+            // Verificar funciones globales
+            const functions = [
+                'testLogin',
+                'testPasswordToggle',
+                'initLoginPasswordToggle'
+            ];
+            
+            functions.forEach(func => {
+                const exists = typeof window[func] === 'function';
+                const status = exists ? 'status-good' : 'status-warning';
+                const icon = exists ? '✅' : '⚠️';
+                html += `<p class="${status}">${icon} ${func}()</p>`;
+            });
+            
+            scriptsDiv.innerHTML = html;
+        }
+        
+        // Tests de funcionalidad
+        function testOriginalLogin() {
+            logToDebug('TEST', 'Probando login original...');
+            
+            try {
+                // Verificar si existe el formulario
+                const form = document.getElementById('loginForm');
+                if (!form) {
+                    logToDebug('ERROR', 'Formulario de login no encontrado');
+                    return;
+                }
+                
+                // Verificar event listeners
+                const events = getEventListeners ? getEventListeners(form) : 'No disponible';
+                logToDebug('INFO', `Event listeners en formulario: ${JSON.stringify(events)}`);
+                
+                logToDebug('SUCCESS', 'Login original parece estar configurado');
+            } catch (error) {
+                logToDebug('ERROR', `Error en test original: ${error.message}`);
+            }
+        }
+        
+        function testSimpleLogin() {
+            logToDebug('TEST', 'Probando login simple...');
+            
+            try {
+                if (typeof window.testLogin === 'function') {
+                    window.testLogin();
+                    logToDebug('SUCCESS', 'Función testLogin ejecutada');
+                } else {
+                    logToDebug('ERROR', 'Función testLogin no encontrada');
+                }
+            } catch (error) {
+                logToDebug('ERROR', `Error en test simple: ${error.message}`);
+            }
+        }
+        
+        function testScripts() {
+            logToDebug('TEST', 'Probando carga de scripts...');
+            
+            // Verificar jQuery si existe
+            if (typeof $ !== 'undefined') {
+                logToDebug('INFO', 'jQuery detectado');
+            }
+            
+            // Verificar Bootstrap
+            if (typeof bootstrap !== 'undefined') {
+                logToDebug('INFO', 'Bootstrap JS detectado');
+            }
+            
+            // Verificar errores de JavaScript
+            window.addEventListener('error', function(e) {
+                logToDebug('ERROR', `JS Error: ${e.message} en ${e.filename}:${e.lineno}`);
+            });
+            
+            logToDebug('SUCCESS', 'Verificación de scripts completada');
+        }
+        
+        function runAllTests() {
+            logToDebug('TEST', '=== EJECUTANDO TODOS LOS TESTS ===');
+            
+            setTimeout(() => testOriginalLogin(), 100);
+            setTimeout(() => testSimpleLogin(), 500);
+            setTimeout(() => testScripts(), 1000);
+            
+            setTimeout(() => {
+                logToDebug('TEST', '=== TESTS COMPLETADOS ===');
+            }, 1500);
+        }
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            logToDebug('INIT', 'Debug page cargada');
+            
+            setTimeout(() => {
+                runSystemCheck();
+                runScriptsCheck();
+            }, 500);
+            
+            // Actualizar cada 5 segundos
+            setInterval(() => {
+                runSystemCheck();
+                runScriptsCheck();
+            }, 5000);
+        });
+        
+        // Capturar errores globales
+        window.addEventListener('error', function(e) {
+            logToDebug('ERROR', `Global Error: ${e.message}`);
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            logToDebug('ERROR', `Unhandled Promise: ${e.reason}`);
+        });
+    </script>
+</body>
+</html>

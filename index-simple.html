@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Las Gemelas - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .logo {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            font-size: 16px;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: white;
+        }
+        
+        /* Toggle de contraseña */
+        #togglePassword {
+            border-left: none !important;
+            background-color: #f8f9fa !important;
+            border-color: #e9ecef !important;
+            color: #6c757d !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            opacity: 1 !important;
+        }
+        
+        #togglePassword:hover {
+            background-color: #e9ecef !important;
+            color: #495057 !important;
+        }
+        
+        #togglePassword:focus {
+            box-shadow: none !important;
+        }
+        
+        .input-group > .form-control:not(:last-child) {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        
+        .input-group > .btn:not(:first-child) {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        .test-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🎭 Las Gemelas</div>
+        
+        <!-- Información de prueba -->
+        <div class="test-info">
+            <strong>👤 Cuentas de prueba:</strong><br>
+            <small>
+                • U23201604 / Usuario123@<br>
+                • U23256703 / Miodemi456#<br>
+                • T20137912 / Tecnico456# (Técnico)
+            </small>
+        </div>
+        
+        <form id="loginForm">
+            <div class="mb-3">
+                <label for="loginUsername" class="form-label">Usuario</label>
+                <input type="text" class="form-control" id="loginUsername" 
+                       placeholder="Ej: U23201604" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="loginPassword" class="form-label">Contraseña</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="loginPassword" 
+                           placeholder="Tu contraseña" required>
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword" 
+                            title="Mostrar contraseña">
+                        <i class="bi bi-eye" id="loginPasswordIcon"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="errorMessage" class="alert" style="display: none;"></div>
+            
+            <button type="submit" class="btn btn-login w-100 mb-3">
+                🚀 Iniciar Sesión
+            </button>
+            
+            <div class="text-center">
+                <button type="button" class="btn btn-link" onclick="testLogin()">
+                    🧪 Llenar datos de prueba
+                </button>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="registro.html" class="text-decoration-none">
+                    ¿No tienes cuenta? Regístrate aquí
+                </a>
+            </div>
+        </form>
+        
+        <!-- Enlaces de navegación -->
+        <div class="text-center mt-4">
+            <small>
+                <a href="index.html" class="text-muted me-2">Login Original</a> |
+                <a href="panel-tecnico.html" class="text-muted ms-2">Panel Técnico</a>
+            </small>
+        </div>
+    </div>
+
+    <!-- Script simplificado -->
+    <script src="codigoIndex-simple.js"></script>
+</body>
+</html>

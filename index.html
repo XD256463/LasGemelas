@@ -1,61 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Las Gemelas - Inicio de Sesión</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Estilos ULTRA ROBUSTOS para el toggle de contraseña en login */
-        #togglePassword {
-            border-left: none !important;
-            pointer-events: auto !important;
-            opacity: 1 !important;
-            cursor: pointer !important;
-            background-color: #f8f9fa !important;
-            border-color: #ced4da !important;
-            color: #495057 !important;
+        /* Efectos adicionales para el login mejorado */
+        .login-title {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            position: relative;
         }
         
-        /* Forzar estados activos */
-        #togglePassword:hover,
-        #togglePassword.hover,
-        #togglePassword:focus,
-        #togglePassword.focus,
-        #togglePassword:active,
-        #togglePassword.active,
-        #togglePassword:disabled,
-        #togglePassword.disabled,
-        #togglePassword[disabled] {
-            opacity: 1 !important;
-            pointer-events: auto !important;
-            cursor: pointer !important;
-            background-color: #f8f9fa !important;
-            border-color: #ced4da !important;
-            color: #495057 !important;
+        .login-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
         }
         
-        /* Forzar visibilidad del icono */
-        #loginPasswordIcon {
-            opacity: 1 !important;
-            pointer-events: none !important;
-            color: #495057 !important;
+        .form-check-label {
+            color: #6c757d !important;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.3s ease;
         }
         
-        /* Asegurar que el input group funcione correctamente */
-        .input-group > .form-control:not(:last-child) {
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
+        .form-check-label:hover {
+            color: #667eea !important;
         }
         
-        .input-group > .btn:not(:first-child) {
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        
+        .login-link {
+            color: #667eea !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            position: relative !important;
+        }
+        
+        .login-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        
+        .login-link:hover::after {
+            width: 100%;
+        }
+        
+        .login-link:hover {
+            color: #5a67d8 !important;
+            transform: translateY(-1px);
+        }
+        
+        /* Animación de entrada para el formulario */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-form-container {
+            animation: slideInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Efecto de ondas en el fondo */
+        .wave-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.05' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,117.3C1248,117,1344,139,1392,149.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") repeat-x;
+            animation: waveMove 20s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        @keyframes waveMove {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-50px); }
         }
     </style>
 </head>
@@ -66,11 +118,11 @@
             <div class="col-lg-6 col-md-5 d-none d-md-block p-0">
                 <img src="img/Login.jpg" class="login-image" alt="Imagen promocional de disfraces">
             </div>
-            <div class="col-lg-6 col-md-7 d-flex align-items-center justify-content-center">
+            <div class="col-lg-6 col-md-7 d-flex align-items-center justify-content-center position-relative">
+                <div class="wave-bg"></div>
                 <div class="login-form-container fade-in-up">
                     <div class="logo-principal mb-4 efecto-flotar">Las Gemelas</div>
-                    <h3 class="text-center mb-4" style="color: var(--color-primario); font-weight: 600;">¡Bienvenido de
-                        vuelta!</h3>
+                    <h3 class="login-title">¡Bienvenido de vuelta!</h3>
                     <form id="loginForm">
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" placeholder="Código de Usuario (Ej: U23201604)"
@@ -100,8 +152,7 @@
                             ✨ Iniciar Sesión ✨
                         </button>
                         <div class="text-center">
-                            <a href="registro.html"
-                                style="color: var(--color-primario); text-decoration: none; font-weight: 500;">
+                            <a href="registro.html" class="login-link">
                                 ¿No tienes cuenta? ¡Regístrate aquí! 🎭
                             </a>
                         </div>
@@ -111,11 +162,7 @@
         </div>
     </div>
     <!-- Scripts -->
-    <script src="api-client.js"></script>
-    <script src="password-toggle-fix.js"></script>
-    <script src="codigoIndex.js"></script>
-    <script src="toggle-guardian.js"></script>
-    <script src="efectos.js"></script>
+    <script src="codigoIndex-simple.js"></script>
 </body>
 
 </html>

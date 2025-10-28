@@ -30,15 +30,35 @@
                         </h3>
                         
                         <div class="mb-4">
-                            <label for="registerUsername" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
-                                🆔 Código de Usuario (U o T + números):
+                            <label for="registerName" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                👤 Nombre Completo:
                             </label>
-                            <input type="text" id="registerUsername" name="registerUsername" 
-                                   placeholder="Ej: U12345 o T54321" class="form-control" 
-                                   pattern="[UT]\d+" title="Debe empezar con U o T seguido de números" required>
-                            <div class="form-text" style="color: var(--color-primario);">
-                                💡 Usa U para usuarios normales o T para trabajadores
-                            </div>
+                            <input type="text" id="registerName" name="registerName" 
+                                   placeholder="Tu nombre completo" class="form-control" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="registerEmail" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                📧 Correo Electrónico:
+                            </label>
+                            <input type="email" id="registerEmail" name="registerEmail" 
+                                   placeholder="tu@email.com" class="form-control" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="registerPhone" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                📱 Teléfono (Opcional):
+                            </label>
+                            <input type="tel" id="registerPhone" name="registerPhone" 
+                                   placeholder="Ej: +57 300 123 4567" class="form-control">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="registerAddress" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                🏠 Dirección (Opcional):
+                            </label>
+                            <textarea id="registerAddress" name="registerAddress" 
+                                      placeholder="Tu dirección completa" class="form-control" rows="2"></textarea>
                         </div>
                         
                         <div class="input-container mb-4">
@@ -76,8 +96,10 @@
             </div>
         </div>
     </div>
+    <!-- Scripts -->
+    <script src="api-client.js"></script>
+    <script src="codigoRegistro.js"></script>
+    <script src="efectos.js"></script>
 </body>
 
 </html>
-<script src="codigoRegistro.js"></script>
-<script src="efectos.js"></script>

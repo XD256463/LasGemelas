@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Conexión - Las Gemelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .test-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .status-success { color: #27ae60; }
+        .status-error { color: #e74c3c; }
+        .status-loading { color: #3498db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-container">
+            <h2 class="text-center mb-4">🔧 Prueba de Conexión a Base de Datos</h2>
+            
+            <div class="mb-4">
+                <h5>Estado de la Conexión:</h5>
+                <p id="connectionStatus" class="status-loading">⏳ Probando conexión...</p>
+            </div>
+            
+            <div class="mb-4">
+                <h5>Usuarios Registrados Localmente:</h5>
+                <div id="localUsers"></div>
+            </div>
+            
+            <div class="mb-4">
+                <h5>Usuarios Pendientes de Sincronización:</h5>
+                <div id="pendingUsers"></div>
+            </div>
+            
+            <div class="text-center">
+                <button id="testConnection" class="btn btn-primary me-2">🔄 Probar Conexión</button>
+                <button id="syncUsers" class="btn btn-success me-2">📤 Sincronizar Usuarios</button>
+                <button id="clearLocal" class="btn btn-warning">🗑️ Limpiar Local</button>
+            </div>
+            
+            <div class="mt-4">
+                <a href="registro.html" class="btn btn-outline-primary">← Volver al Registro</a>
+                <a href="index.html" class="btn btn-outline-secondary">🏠 Inicio</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para probar la conexión
+        async function testDatabaseConnection() {
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.textContent = '⏳ Probando conexión...';
+            statusElement.className = 'status-loading';
+            
+            try {
+                const response = await fetch('/api/test-db');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    statusElement.textContent = '✅ Conexión exitosa a MySQL en Railway';
+                    statusElement.className = 'status-success';
+                } else {
+                    statusElement.textContent = `❌ Error: ${result.error}`;
+                    statusElement.className = 'status-error';
+                }
+            } catch (error) {
+                statusElement.textContent = `❌ Error de conexión: ${error.message}`;
+                statusElement.className = 'status-error';
+            }
+        }
+        
+        // Mostrar usuarios locales
+        function showLocalUsers() {
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const localUsersElement = document.getElementById('localUsers');
+            
+            if (users.length === 0) {
+                localUsersElement.innerHTML = '<p class="text-muted">No hay usuarios registrados localmente</p>';
+            } else {
+                localUsersElement.innerHTML = users.map(user => 
+                    `<div class="border p-2 mb-2 rounded">
+                        <strong>${user.nombre || user.username}</strong><br>
+                        <small>Email: ${user.email}</small><br>
+                        <small>Registrado: ${new Date(user.registeredAt).toLocaleString()}</small>
+                        ${user.syncPending ? '<span class="badge bg-warning">Pendiente</span>' : '<span class="badge bg-success">Sincronizado</span>'}
+                    </div>`
+                ).join('');
+            }
+        }
+        
+        // Mostrar usuarios pendientes
+        function showPendingUsers() {
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const pendingUsers = users.filter(user => user.syncPending);
+            const pendingElement = document.getElementById('pendingUsers');
+            
+            if (pendingUsers.length === 0) {
+                pendingElement.innerHTML = '<p class="text-muted">No hay usuarios pendientes de sincronización</p>';
+            } else {
+                pendingElement.innerHTML = `<p class="text-warning">${pendingUsers.length} usuarios esperando sincronización</p>`;
+            }
+        }
+        
+        // Sincronizar usuarios
+        async function syncPendingUsers() {
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            const pendingUsers = users.filter(user => user.syncPending);
+            
+            if (pendingUsers.length === 0) {
+                alert('No hay usuarios pendientes de sincronización');
+                return;
+            }
+            
+            let syncedCount = 0;
+            
+            for (const user of pendingUsers) {
+                try {
+                    const userData = {
+                        nombre: user.nombre || user.username,
+                        email: user.email,
+                        password: user.password,
+                        telefono: user.telefono || '',
+                        direccion: user.direccion || ''
+                    };
+
+                    const response = await fetch('/api/registro', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData)
+                    });
+
+                    if (response.ok) {
+                        user.syncPending = false;
+                        user.syncedAt = new Date().toISOString();
+                        syncedCount++;
+                    }
+                } catch (error) {
+                    console.error(`Error sincronizando ${user.email}:`, error);
+                }
+            }
+            
+            localStorage.setItem('registeredUsers', JSON.stringify(users));
+            alert(`${syncedCount} usuarios sincronizados exitosamente`);
+            showLocalUsers();
+            showPendingUsers();
+        }
+        
+        // Event listeners
+        document.getElementById('testConnection').addEventListener('click', testDatabaseConnection);
+        document.getElementById('syncUsers').addEventListener('click', syncPendingUsers);
+        document.getElementById('clearLocal').addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres limpiar todos los datos locales?')) {
+                localStorage.removeItem('registeredUsers');
+                showLocalUsers();
+                showPendingUsers();
+                alert('Datos locales eliminados');
+            }
+        });
+        
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            testDatabaseConnection();
+            showLocalUsers();
+            showPendingUsers();
+        });
+    </script>
+</body>
+</html>

@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const usernameInput = document.getElementById('registerUsername');
+    const nameInput = document.getElementById('registerName');
+    const emailInput = document.getElementById('registerEmail');
+    const phoneInput = document.getElementById('registerPhone');
+    const addressInput = document.getElementById('registerAddress');
     const passwordInput = document.getElementById('registerPassword');
     const toggleIcon = document.getElementById('registerTogglePassword');
     const submitButton = document.getElementById('registerButton');
@@ -10,11 +13,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const reqUppercase = document.getElementById('reqUppercase');
     const reqSpecial = document.getElementById('reqSpecial');
 
-    // Validar formato de usuario
-    const validateUsername = () => {
-        const username = usernameInput.value.trim();
-        const usernamePattern = /^[UT]\d+$/;
-        return usernamePattern.test(username);
+    // Validar nombre
+    const validateName = () => {
+        const name = nameInput.value.trim();
+        return name.length >= 2;
+    };
+
+    // Validar email
+    const validateEmail = () => {
+        const email = emailInput.value.trim();
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailPattern.test(email);
     };
 
     const validatePassword = () => {
@@ -41,10 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const validateForm = () => {
-        const usernameValid = validateUsername();
+        const nameValid = validateName();
+        const emailValid = validateEmail();
         const passwordValid = validatePassword();
         
-        if (usernameValid && passwordValid) {
+        if (nameValid && emailValid && passwordValid) {
             submitButton.disabled = false;
             submitButton.style.opacity = '1';
             messageElement.textContent = '✅ ¡Formulario válido! Puedes registrarte.';
@@ -52,8 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             submitButton.disabled = true;
             submitButton.style.opacity = '0.6';
-            if (!usernameValid && usernameInput.value.trim()) {
-                messageElement.textContent = '❌ El código de usuario debe empezar con U o T seguido de números.';
+            
+            if (!nameValid && nameInput.value.trim()) {
+                messageElement.textContent = '❌ El nombre debe tener al menos 2 caracteres.';
+                messageElement.style.color = '#e74c3c';
+            } else if (!emailValid && emailInput.value.trim()) {
+                messageElement.textContent = '❌ Ingresa un correo electrónico válido.';
                 messageElement.style.color = '#e74c3c';
             } else {
                 messageElement.textContent = '';
@@ -81,7 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Event listeners para validación en tiempo real
-    usernameInput.addEventListener('input', validateForm);
+    nameInput.addEventListener('input', validateForm);
+    emailInput.addEventListener('input', validateForm);
     passwordInput.addEventListener('input', validateForm);
     
     // Función global para validación externa
@@ -90,14 +105,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Manejo del envío del formulario
-    document.getElementById('registerForm').addEventListener('submit', (e) => {
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const username = usernameInput.value.trim();
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const address = addressInput.value.trim();
         const password = passwordInput.value;
         
-        if (!validateUsername()) {
-            messageElement.textContent = '❌ Formato de usuario inválido. Debe ser U o T seguido de números.';
+        if (!validateName()) {
+            messageElement.textContent = '❌ El nombre debe tener al menos 2 caracteres.';
+            messageElement.style.color = '#e74c3c';
+            return;
+        }
+        
+        if (!validateEmail()) {
+            messageElement.textContent = '❌ Ingresa un correo electrónico válido.';
             messageElement.style.color = '#e74c3c';
             return;
         }
@@ -108,35 +132,158 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Simular registro exitoso
-        messageElement.textContent = '🎉 ¡Registro exitoso! Redirigiendo...';
-        messageElement.style.color = '#27ae60';
-        
-        // Guardar usuario en localStorage (simulación)
-        const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-        
-        // Verificar si el usuario ya existe
-        if (users.find(user => user.username === username)) {
-            messageElement.textContent = '❌ Este código de usuario ya está registrado.';
-            messageElement.style.color = '#e74c3c';
-            return;
+        // Deshabilitar botón durante el proceso
+        submitButton.disabled = true;
+        submitButton.textContent = '⏳ Registrando...';
+        messageElement.textContent = '📡 Conectando con el servidor...';
+        messageElement.style.color = '#3498db';
+
+        try {
+            // Crear objeto de datos del usuario
+            const userData = {
+                nombre: name,
+                email: email,
+                password: password,
+                telefono: phone,
+                direccion: address
+            };
+
+            // Enviar datos al servidor
+            const response = await fetch('/api/registro', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Registro exitoso
+                messageElement.textContent = '🎉 ¡Registro exitoso! Usuario guardado en la base de datos. Redirigiendo...';
+                messageElement.style.color = '#27ae60';
+                
+                // Guardar también en localStorage como respaldo
+                const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+                users.push({
+                    id: result.userId,
+                    nombre: name,
+                    email: email,
+                    telefono: phone,
+                    direccion: address,
+                    registeredAt: new Date().toISOString()
+                });
+                localStorage.setItem('registeredUsers', JSON.stringify(users));
+                
+                // Redirigir después de 2 segundos
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            } else {
+                // Error del servidor
+                if (result.error === 'El usuario ya existe') {
+                    messageElement.textContent = '❌ Este código de usuario ya está registrado en la base de datos.';
+                } else {
+                    messageElement.textContent = `❌ Error: ${result.error}`;
+                }
+                messageElement.style.color = '#e74c3c';
+                
+                // Rehabilitar botón
+                submitButton.disabled = false;
+                submitButton.textContent = '🎉 Registrar Cuenta 🎉';
+            }
+        } catch (error) {
+            console.error('Error de conexión:', error);
+            
+            // Fallback a localStorage si no hay conexión
+            messageElement.textContent = '⚠️ Sin conexión al servidor. Guardando localmente...';
+            messageElement.style.color = '#f39c12';
+            
+            const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+            
+            // Verificar si el usuario ya existe localmente
+            if (users.find(user => user.email === email)) {
+                messageElement.textContent = '❌ Este correo ya está registrado localmente.';
+                messageElement.style.color = '#e74c3c';
+                submitButton.disabled = false;
+                submitButton.textContent = '🎉 Registrar Cuenta 🎉';
+                return;
+            }
+            
+            // Guardar localmente
+            users.push({
+                nombre: name,
+                email: email,
+                telefono: phone,
+                direccion: address,
+                password: password,
+                registeredAt: new Date().toISOString(),
+                syncPending: true // Marcar para sincronizar después
+            });
+            
+            localStorage.setItem('registeredUsers', JSON.stringify(users));
+            
+            messageElement.textContent = '✅ Usuario guardado localmente. Se sincronizará cuando haya conexión.';
+            messageElement.style.color = '#27ae60';
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
         }
-        
-        // Agregar nuevo usuario
-        users.push({
-            username: username,
-            password: password,
-            registeredAt: new Date().toISOString()
-        });
-        
-        localStorage.setItem('registeredUsers', JSON.stringify(users));
-        
-        // Redirigir después de 2 segundos
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 2000);
     });
 
     // Validación inicial
     validateForm();
 });
+// Fu
+nción para sincronizar usuarios pendientes
+async function syncPendingUsers() {
+    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    const pendingUsers = users.filter(user => user.syncPending);
+    
+    if (pendingUsers.length === 0) return;
+    
+    console.log(`Sincronizando ${pendingUsers.length} usuarios pendientes...`);
+    
+    for (const user of pendingUsers) {
+        try {
+            const userData = {
+                nombre: user.nombre,
+                email: user.email,
+                password: user.password,
+                telefono: user.telefono || '',
+                direccion: user.direccion || ''
+            };
+
+            const response = await fetch('/api/registro', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (response.ok) {
+                // Marcar como sincronizado
+                user.syncPending = false;
+                user.syncedAt = new Date().toISOString();
+                console.log(`Usuario ${user.email} sincronizado exitosamente`);
+            }
+        } catch (error) {
+            console.log(`Error sincronizando usuario ${user.email}:`, error);
+        }
+    }
+    
+    // Actualizar localStorage
+    localStorage.setItem('registeredUsers', JSON.stringify(users));
+}
+
+// Intentar sincronizar al cargar la página
+window.addEventListener('load', () => {
+    // Esperar un poco para que la página cargue completamente
+    setTimeout(syncPendingUsers, 2000);
+});
+
+// Sincronizar cuando se recupere la conexión
+window.addEventListener('online', syncPendingUsers);

@@ -4,9 +4,10 @@
   "description": "Aplicación web Las Gemelas con MySQL",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "build": "echo 'No build step required'"
+    "start": "node server-clean.js",
+    "dev": "nodemon server-clean.js",
+    "build": "echo 'No build step required'",
+    "start-old": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",

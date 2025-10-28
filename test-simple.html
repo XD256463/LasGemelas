@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Simple - Las Gemelas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .loading { color: #3498db; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .result {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🧪 Prueba Simple del Sistema</h2>
+        
+        <div class="test-section">
+            <h4>1. Estado del Servidor</h4>
+            <button onclick="testHealth()">Probar /health</button>
+            <div id="healthResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h4>2. Conexión a Base de Datos</h4>
+            <button onclick="testConnection()">Probar Conexión BD</button>
+            <div id="connectionResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h4>3. Registro de Usuario</h4>
+            <button onclick="testRegistration()">Probar Registro</button>
+            <div id="registrationResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h4>4. Login de Usuario</h4>
+            <button onclick="testLogin()">Probar Login</button>
+            <div id="loginResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button onclick="runAllTests()" style="background: #28a745;">🚀 Ejecutar Todas las Pruebas</button>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="registro.html">📝 Ir al Registro</a> | 
+            <a href="diagnostico.html">🔧 Diagnóstico Completo</a> | 
+            <a href="index.html">🏠 Inicio</a>
+        </div>
+    </div>
+
+    <script>
+        let testUser = null;
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<span class="loading">⏳ Probando...</span>';
+            
+            try {
+                const response = await fetch('/health');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">✅ Éxito</span><br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Error ${response.status}</span><br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error de conexión: ${error.message}</span>`;
+            }
+        }
+
+        async function testConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<span class="loading">⏳ Probando conexión BD...</span>';
+            
+            try {
+                const response = await fetch('/api/test-connection');
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    resultDiv.innerHTML = `<span class="success">✅ Conexión BD exitosa</span><br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Error BD</span><br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function testRegistration() {
+            const resultDiv = document.getElementById('registrationResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<span class="loading">⏳ Probando registro...</span>';
+            
+            testUser = {
+                nombre: 'Usuario Test',
+                email: `test_${Date.now()}@example.com`,
+                password: 'TestPassword123!',
+                telefono: '+57 300 123 4567',
+                direccion: 'Dirección de prueba'
+            };
+            
+            try {
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testUser)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    resultDiv.innerHTML = `<span class="success">✅ Registro exitoso</span><br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Error en registro</span><br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.style.display = 'block';
+            
+            if (!testUser) {
+                resultDiv.innerHTML = '<span class="error">❌ Primero ejecuta el test de registro</span>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<span class="loading">⏳ Probando login...</span>';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: testUser.email,
+                        password: testUser.password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    resultDiv.innerHTML = `<span class="success">✅ Login exitoso</span><br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Error en login</span><br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function runAllTests() {
+            await testHealth();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testConnection();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testRegistration();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testLogin();
+        }
+    </script>
+</body>
+</html>

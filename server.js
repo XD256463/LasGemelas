@@ -506,10 +506,288 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
+// ===== FUNCIONALIDAD DE TÉCNICOS =====
+
+// Códigos de técnico válidos (en producción deberían estar en base de datos)
+const TECH_CODES = {
+    'TECH_001': { nombre: 'Técnico Principal', email: 'tech001@lasgemelas.com', activo: true },
+    'TECH_002': { nombre: 'Técnico Secundario', email: 'tech002@lasgemelas.com', activo: true },
+    'TECH_ADMIN': { nombre: 'Administrador', email: 'admin@lasgemelas.com', activo: true },
+    'T20137912': { nombre: 'Técnico Interno', email: 'interno@lasgemelas.com', activo: true }
+};
+
+// Middleware para verificar código de técnico
+const verifyTechCode = (req, res, next) => {
+    const techCode = req.headers['techcode'] || req.headers['techCode'];
+    
+    if (!techCode) {
+        return res.status(401).json({ error: 'Código de técnico requerido' });
+    }
+    
+    if (!TECH_CODES[techCode] || !TECH_CODES[techCode].activo) {
+        return res.status(401).json({ error: 'Código de técnico inválido' });
+    }
+    
+    req.techCode = techCode;
+    req.techInfo = TECH_CODES[techCode];
+    next();
+};
+
+// Rutas de técnicos - Estadísticas
+app.get('/api/tech/stats', verifyTechCode, async (req, res) => {
+    try {
+        const connection = await pool.getConnection();
+        
+        // Total de usuarios
+        const [totalResult] = await connection.execute('SELECT COUNT(*) as total FROM usuarios');
+        
+        // Usuarios registrados hoy
+        const [todayResult] = await connection.execute(`
+            SELECT COUNT(*) as total FROM usuarios 
+            WHERE DATE(fecha_registro) = CURDATE()
+        `);
+        
+        // Usuarios registrados esta semana
+        const [weekResult] = await connection.execute(`
+            SELECT COUNT(*) as total FROM usuarios 
+            WHERE YEARWEEK(fecha_registro, 1) = YEARWEEK(CURDATE(), 1)
+        `);
+        
+        connection.release();
+        
+        res.json({
+            success: true,
+            data: {
+                totalUsuarios: totalResult[0].total,
+                usuariosHoy: todayResult[0].total,
+                usuariosSemana: weekResult[0].total
+            }
+        });
+    } catch (error) {
+        console.error('Error obteniendo estadísticas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Rutas de técnicos - Listar usuarios
+app.get('/api/tech/usuarios', verifyTechCode, async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * limit;
+        
+        const connection = await pool.getConnection();
+        
+        let whereClause = '';
+        let queryParams = [];
+        
+        if (search) {
+            whereClause = 'WHERE nombre LIKE ? OR email LIKE ?';
+            queryParams = [`%${search}%`, `%${search}%`];
+        }
+        
+        // Obtener usuarios con paginación
+        const [usuarios] = await connection.execute(`
+            SELECT id, nombre, email, telefono, direccion, fecha_registro 
+            FROM usuarios 
+            ${whereClause}
+            ORDER BY fecha_registro DESC 
+            LIMIT ? OFFSET ?
+        `, [...queryParams, limit, offset]);
+        
+        // Contar total de usuarios
+        const [countResult] = await connection.execute(`
+            SELECT COUNT(*) as total FROM usuarios ${whereClause}
+        `, queryParams);
+        
+        const total = countResult[0].total;
+        const pages = Math.ceil(total / limit);
+        
+        connection.release();
+        
+        res.json({
+            success: true,
+            data: usuarios,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages
+            }
+        });
+    } catch (error) {
+        console.error('Error obteniendo usuarios:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Rutas de técnicos - Obtener usuario específico
+app.get('/api/tech/usuarios/:id', verifyTechCode, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const connection = await pool.getConnection();
+        
+        const [usuarios] = await connection.execute(
+            'SELECT id, nombre, email, telefono, direccion, fecha_registro FROM usuarios WHERE id = ?',
+            [userId]
+        );
+        
+        connection.release();
+        
+        if (usuarios.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        res.json({
+            success: true,
+            data: usuarios[0]
+        });
+    } catch (error) {
+        console.error('Error obteniendo usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Rutas de técnicos - Crear usuario
+app.post('/api/tech/usuarios', verifyTechCode, async (req, res) => {
+    try {
+        const { nombre, email, password, telefono, direccion } = req.body;
+        
+        if (!nombre || !email || !password) {
+            return res.status(400).json({ error: 'Nombre, email y contraseña son requeridos' });
+        }
+        
+        const connection = await pool.getConnection();
+        
+        // Verificar si el email ya existe
+        const [existing] = await connection.execute('SELECT id FROM usuarios WHERE email = ?', [email]);
+        if (existing.length > 0) {
+            connection.release();
+            return res.status(400).json({ error: 'El email ya está registrado' });
+        }
+        
+        // Encriptar contraseña
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Insertar usuario
+        const [result] = await connection.execute(
+            'INSERT INTO usuarios (nombre, email, password, telefono, direccion) VALUES (?, ?, ?, ?, ?)',
+            [nombre, email, hashedPassword, telefono || null, direccion || null]
+        );
+        
+        connection.release();
+        
+        res.status(201).json({
+            success: true,
+            message: 'Usuario creado exitosamente',
+            data: { id: result.insertId }
+        });
+    } catch (error) {
+        console.error('Error creando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Rutas de técnicos - Actualizar usuario
+app.put('/api/tech/usuarios/:id', verifyTechCode, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { nombre, email, password, telefono, direccion } = req.body;
+        
+        if (!nombre || !email) {
+            return res.status(400).json({ error: 'Nombre y email son requeridos' });
+        }
+        
+        const connection = await pool.getConnection();
+        
+        // Verificar que el usuario existe
+        const [existing] = await connection.execute('SELECT id FROM usuarios WHERE id = ?', [userId]);
+        if (existing.length === 0) {
+            connection.release();
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        // Verificar si el email ya existe en otro usuario
+        const [emailCheck] = await connection.execute('SELECT id FROM usuarios WHERE email = ? AND id != ?', [email, userId]);
+        if (emailCheck.length > 0) {
+            connection.release();
+            return res.status(400).json({ error: 'El email ya está registrado por otro usuario' });
+        }
+        
+        let updateQuery = 'UPDATE usuarios SET nombre = ?, email = ?, telefono = ?, direccion = ?';
+        let updateParams = [nombre, email, telefono || null, direccion || null];
+        
+        // Si se proporciona nueva contraseña, incluirla en la actualización
+        if (password && password.trim() !== '') {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            updateQuery += ', password = ?';
+            updateParams.push(hashedPassword);
+        }
+        
+        updateQuery += ' WHERE id = ?';
+        updateParams.push(userId);
+        
+        await connection.execute(updateQuery, updateParams);
+        connection.release();
+        
+        res.json({
+            success: true,
+            message: 'Usuario actualizado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error actualizando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Rutas de técnicos - Eliminar usuario
+app.delete('/api/tech/usuarios/:id', verifyTechCode, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const connection = await pool.getConnection();
+        
+        // Verificar que el usuario existe
+        const [existing] = await connection.execute('SELECT id, nombre FROM usuarios WHERE id = ?', [userId]);
+        if (existing.length === 0) {
+            connection.release();
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        // Eliminar usuario
+        await connection.execute('DELETE FROM usuarios WHERE id = ?', [userId]);
+        connection.release();
+        
+        res.json({
+            success: true,
+            message: `Usuario ${existing[0].nombre} eliminado exitosamente`
+        });
+    } catch (error) {
+        console.error('Error eliminando usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Endpoint para debug - verificar técnicos
+app.get('/api/debug/tecnicos', (req, res) => {
+    const tecnicos = Object.keys(TECH_CODES).map(codigo => ({
+        codigo,
+        nombre: TECH_CODES[codigo].nombre,
+        email: TECH_CODES[codigo].email,
+        activo: TECH_CODES[codigo].activo
+    }));
+    
+    res.json({
+        success: true,
+        data: tecnicos
+    });
+});
+
 // Inicializar servidor
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('Códigos de técnico disponibles:', Object.keys(TECH_CODES).join(', '));
 
     // Inicializar base de datos después de que el servidor esté corriendo
     initializeDatabase().then(success => {

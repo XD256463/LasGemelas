@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Registro Simple</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Test Registro - Nueva Base de Datos</h3>
+                        <small class="text-muted">interchange.proxy.rlwy.net:55821</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="testForm">
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label">Nombre:</label>
+                                <input type="text" class="form-control" id="nombre" value="Usuario Test" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email:</label>
+                                <input type="email" class="form-control" id="email" value="test@ejemplo.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña:</label>
+                                <input type="password" class="form-control" id="password" value="Test123@" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="telefono" class="form-label">Teléfono:</label>
+                                <input type="text" class="form-control" id="telefono" value="123456789">
+                            </div>
+                            <div class="mb-3">
+                                <label for="direccion" class="form-label">Dirección:</label>
+                                <input type="text" class="form-control" id="direccion" value="Dirección de prueba">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Probar Registro</button>
+                            <button type="button" class="btn btn-info ms-2" onclick="testConnection()">Test Conexión BD</button>
+                        </form>
+                    </div>
+                    <div class="card-footer">
+                        <div id="result"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Probando registro...</div>';
+            
+            const userData = {
+                nombre: document.getElementById('nombre').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                telefono: document.getElementById('telefono').value,
+                direccion: document.getElementById('direccion').value
+            };
+            
+            try {
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5>✅ Registro Exitoso</h5>
+                            <p><strong>Mensaje:</strong> ${result.message}</p>
+                            <p><strong>ID Usuario:</strong> ${result.userId}</p>
+                            <p><strong>Usuario guardado en Railway MySQL</strong></p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h5>❌ Error en Registro</h5>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                            <p><strong>Detalles:</strong> ${result.details || 'No disponibles'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>❌ Error de Conexión</h5>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Verifica que el servidor esté funcionando</p>
+                    </div>
+                `;
+            }
+        });
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Probando conexión a la base de datos...</div>';
+            
+            try {
+                const response = await fetch('/api/test-db');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5>✅ Conexión Exitosa</h5>
+                            <p><strong>Mensaje:</strong> ${result.message}</p>
+                            <p><strong>Host:</strong> ${result.host}</p>
+                            <p><strong>Base de datos:</strong> ${result.database}</p>
+                            <p><strong>Tabla usuarios:</strong> ${result.tablaUsuarios}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h5>❌ Error de Conexión</h5>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                            <p><strong>Detalles:</strong> ${result.details}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>❌ Error de Red</h5>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Generar email único para evitar duplicados
+        function generateUniqueEmail() {
+            const timestamp = Date.now();
+            document.getElementById('email').value = `test${timestamp}@ejemplo.com`;
+        }
+        
+        // Generar email único al cargar
+        window.onload = generateUniqueEmail;
+    </script>
+</body>
+</html>

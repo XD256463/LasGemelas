@@ -22,10 +22,10 @@ app.use(express.static('.'));
 
 // Configuración de la base de datos
 const dbConfig = {
-    host: process.env.DB_HOST || 'gondola.proxy.rlwy.net',
-    port: parseInt(process.env.DB_PORT) || 29190,
+    host: process.env.DB_HOST || 'interchange.proxy.rlwy.net',
+    port: parseInt(process.env.DB_PORT) || 55821,
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'rwqaWmQZieEweZGMtPBtjKCaKkAFvMEQ',
+    password: process.env.DB_PASSWORD || 'jrYHjccWYOFydWBzKpvPlGJQnnqTNjpF',
     database: process.env.DB_NAME || 'railway',
     connectTimeout: 60000,
     acquireTimeout: 60000,
@@ -440,7 +440,7 @@ app.get('/api/test-db', async (req, res) => {
         res.json({ 
             message: 'Conexión a la base de datos exitosa',
             database: process.env.DB_NAME || 'railway',
-            host: process.env.DB_HOST || 'gondola.proxy.rlwy.net',
+            host: process.env.DB_HOST || 'interchange.proxy.rlwy.net',
             tablaUsuarios: tables.length > 0 ? 'existe' : 'no existe',
             columnas: tableInfo
         });
@@ -498,6 +498,147 @@ app.get('/api/debug-usuarios', async (req, res) => {
         console.error('Error verificando tabla usuarios:', error);
         res.status(500).json({ 
             error: 'Error verificando tabla usuarios',
+            details: error.message 
+        });
+    }
+});
+
+// Endpoint para técnicos - Obtener todos los usuarios
+app.get('/api/usuarios-tech', async (req, res) => {
+    try {
+        const techCode = req.headers['x-tech-code'] || req.headers['techcode'] || req.query.techCode;
+        
+        // Verificar código de técnico
+        const validCodes = ['TECH_001', 'TECH_002', 'TECH_ADMIN', 'T20137912'];
+        if (!validCodes.includes(techCode)) {
+            return res.status(401).json({ error: 'Código de técnico requerido o inválido' });
+        }
+        
+        const connection = await pool.getConnection();
+        
+        // Obtener todos los usuarios (sin contraseñas)
+        const [usuarios] = await connection.execute(`
+            SELECT id, nombre, email, telefono, direccion, fecha_registro 
+            FROM usuarios 
+            ORDER BY fecha_registro DESC 
+            LIMIT 50
+        `);
+        
+        // Obtener estadísticas
+        const [totalCount] = await connection.execute('SELECT COUNT(*) as total FROM usuarios');
+        const [todayCount] = await connection.execute(`
+            SELECT COUNT(*) as total FROM usuarios 
+            WHERE DATE(fecha_registro) = CURDATE()
+        `);
+        const [weekCount] = await connection.execute(`
+            SELECT COUNT(*) as total FROM usuarios 
+            WHERE YEARWEEK(fecha_registro, 1) = YEARWEEK(CURDATE(), 1)
+        `);
+        
+        connection.release();
+        
+        res.json({
+            success: true,
+            usuarios: usuarios,
+            stats: {
+                total: totalCount[0].total,
+                hoy: todayCount[0].total,
+                semana: weekCount[0].total
+            }
+        });
+    } catch (error) {
+        console.error('Error obteniendo usuarios para técnicos:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// Endpoint para técnicos - Crear usuario
+app.post('/api/usuarios-tech', async (req, res) => {
+    try {
+        const techCode = req.headers['x-tech-code'] || req.headers['techcode'];
+        
+        // Verificar código de técnico
+        const validCodes = ['TECH_001', 'TECH_002', 'TECH_ADMIN', 'T20137912'];
+        if (!validCodes.includes(techCode)) {
+            return res.status(401).json({ error: 'Código de técnico requerido o inválido' });
+        }
+        
+        const { nombre, email, password, telefono, direccion } = req.body;
+        
+        if (!nombre || !email || !password) {
+            return res.status(400).json({ error: 'Nombre, email y contraseña son requeridos' });
+        }
+        
+        const connection = await pool.getConnection();
+        
+        // Verificar si el email ya existe
+        const [existing] = await connection.execute('SELECT id FROM usuarios WHERE email = ?', [email]);
+        if (existing.length > 0) {
+            connection.release();
+            return res.status(400).json({ error: 'El email ya está registrado' });
+        }
+        
+        // Encriptar contraseña
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Insertar usuario
+        const [result] = await connection.execute(
+            'INSERT INTO usuarios (nombre, email, password, telefono, direccion) VALUES (?, ?, ?, ?, ?)',
+            [nombre, email, hashedPassword, telefono || null, direccion || null]
+        );
+        
+        connection.release();
+        
+        res.status(201).json({
+            success: true,
+            message: 'Usuario creado exitosamente',
+            userId: result.insertId
+        });
+    } catch (error) {
+        console.error('Error creando usuario:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// Endpoint para técnicos - Eliminar usuario
+app.delete('/api/usuarios-tech/:id', async (req, res) => {
+    try {
+        const techCode = req.headers['x-tech-code'] || req.headers['techcode'];
+        
+        // Verificar código de técnico
+        const validCodes = ['TECH_001', 'TECH_002', 'TECH_ADMIN', 'T20137912'];
+        if (!validCodes.includes(techCode)) {
+            return res.status(401).json({ error: 'Código de técnico requerido o inválido' });
+        }
+        
+        const userId = req.params.id;
+        const connection = await pool.getConnection();
+        
+        // Verificar que el usuario existe
+        const [existing] = await connection.execute('SELECT nombre FROM usuarios WHERE id = ?', [userId]);
+        if (existing.length === 0) {
+            connection.release();
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        // Eliminar usuario
+        await connection.execute('DELETE FROM usuarios WHERE id = ?', [userId]);
+        connection.release();
+        
+        res.json({
+            success: true,
+            message: `Usuario ${existing[0].nombre} eliminado exitosamente`
+        });
+    } catch (error) {
+        console.error('Error eliminando usuario:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
             details: error.message 
         });
     }

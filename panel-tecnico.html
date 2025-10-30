@@ -313,14 +313,29 @@
         // Cargar estadísticas
         async function loadStats() {
             try {
-                const response = await fetch('/api/debug/usuarios');
+                const response = await fetch('/api/usuarios-tech?techCode=' + currentTechCode, {
+                    headers: {
+                        'x-tech-code': currentTechCode
+                    }
+                });
                 
                 if (response.ok) {
                     const result = await response.json();
                     
-                    document.getElementById('totalUsers').textContent = result.totalUsuarios || '0';
-                    document.getElementById('todayUsers').textContent = '0'; // Simplificado
-                    document.getElementById('weekUsers').textContent = '0'; // Simplificado
+                    if (result.success && result.stats) {
+                        document.getElementById('totalUsers').textContent = result.stats.total || '0';
+                        document.getElementById('todayUsers').textContent = result.stats.hoy || '0';
+                        document.getElementById('weekUsers').textContent = result.stats.semana || '0';
+                    } else {
+                        // Fallback a endpoint básico
+                        const fallbackResponse = await fetch('/api/debug-usuarios');
+                        if (fallbackResponse.ok) {
+                            const fallbackResult = await fallbackResponse.json();
+                            document.getElementById('totalUsers').textContent = fallbackResult.totalUsuarios || '0';
+                            document.getElementById('todayUsers').textContent = '0';
+                            document.getElementById('weekUsers').textContent = '0';
+                        }
+                    }
                     document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 } else {
                     // Valores por defecto si no hay conexión
@@ -339,7 +354,7 @@
             }
         }
 
-        // Cargar usuarios (simplificado)
+        // Cargar usuarios
         async function loadUsers(page = 1) {
             currentPage = page;
             const tbody = document.getElementById('usersTableBody');
@@ -347,19 +362,27 @@
             try {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border text-primary" role="status"></div></td></tr>';
                 
-                const response = await fetch('/api/debug/usuarios');
+                const response = await fetch('/api/usuarios-tech?techCode=' + currentTechCode, {
+                    headers: {
+                        'x-tech-code': currentTechCode
+                    }
+                });
                 
                 if (response.ok) {
                     const result = await response.json();
-                    // Simular paginación simple
-                    const usuarios = result.ejemplos || [];
-                    displayUsers(usuarios);
-                    displayPagination({ page: 1, pages: 1, total: usuarios.length });
+                    
+                    if (result.success && result.usuarios) {
+                        displayUsers(result.usuarios);
+                        displayPagination({ page: 1, pages: 1, total: result.usuarios.length });
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-warning">No se encontraron usuarios</td></tr>';
+                    }
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error cargando usuarios - Verifica que el servidor esté funcionando</td></tr>';
+                    const errorResult = await response.json();
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error: ${errorResult.error}</td></tr>`;
                 }
             } catch (error) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error de conexión - Verifica la URL del servidor</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error de conexión: ' + error.message + '</td></tr>';
             }
         }
 
@@ -444,7 +467,7 @@
             alert('Función de edición no disponible en esta versión simplificada.\n\nPara editar usuarios, usa la base de datos directamente o implementa la funcionalidad completa del servidor.');
         }
 
-        // Guardar usuario (simplificado)
+        // Guardar usuario
         async function saveUser() {
             const form = document.getElementById('userForm');
             if (!form.checkValidity()) {
@@ -467,27 +490,21 @@
             }
             
             try {
-                let response;
-                
                 if (userId) {
-                    // Editar usuario - por ahora solo mostrar mensaje
-                    alert('Función de edición no disponible en esta versión simplificada');
+                    alert('Función de edición no disponible en esta versión');
                     bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
                     return;
-                } else {
-                    // Crear nuevo usuario
-                    response = await fetch('/api/registro-simple', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            nombre: userData.nombre,
-                            email: userData.email,
-                            password: userData.password
-                        })
-                    });
                 }
+                
+                // Crear nuevo usuario usando endpoint de técnicos
+                const response = await fetch('/api/usuarios-tech', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-tech-code': currentTechCode
+                    },
+                    body: JSON.stringify(userData)
+                });
                 
                 const result = await response.json();
                 
@@ -495,7 +512,7 @@
                     bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
                     loadUsers(currentPage);
                     loadStats();
-                    alert('Usuario creado exitosamente');
+                    alert(result.message || 'Usuario creado exitosamente');
                 } else {
                     alert(result.error || 'Error guardando usuario');
                 }
@@ -517,9 +534,28 @@
         async function confirmDelete() {
             if (!userToDelete) return;
             
-            alert('Función de eliminación no disponible en esta versión simplificada.\n\nPara eliminar usuarios, usa la base de datos directamente o implementa la funcionalidad completa del servidor.');
+            try {
+                const response = await fetch(`/api/usuarios-tech/${userToDelete}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'x-tech-code': currentTechCode
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                    loadUsers(currentPage);
+                    loadStats();
+                    alert(result.message || 'Usuario eliminado exitosamente');
+                } else {
+                    alert(result.error || 'Error eliminando usuario');
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
             
-            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
             userToDelete = null;
         }
 

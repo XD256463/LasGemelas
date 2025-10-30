@@ -32,11 +32,11 @@ Esta aplicación web está configurada para funcionar con Railway y una base de 
 2. **Variables de entorno en Railway:**
    Configura estas variables en el dashboard de Railway:
    ```
-   DATABASE_URL=mysql://root:rwqaWmQZieEweZGMtPBtjKCaKkAFvMEQ@gondola.proxy.rlwy.net:29190/railway
-   DB_HOST=gondola.proxy.rlwy.net
-   DB_PORT=29190
+   DATABASE_URL=mysql://root:jrYHjccWYOFydWBzKpvPlGJQnnqTNjpF@interchange.proxy.rlwy.net:55821/railway
+   DB_HOST=interchange.proxy.rlwy.net
+   DB_PORT=55821
    DB_USER=root
-   DB_PASSWORD=rwqaWmQZieEweZGMtPBtjKCaKkAFvMEQ
+   DB_PASSWORD=jrYHjccWYOFydWBzKpvPlGJQnnqTNjpF
    DB_NAME=railway
    JWT_SECRET=tu_jwt_secret_muy_seguro_aqui
    PORT=3000

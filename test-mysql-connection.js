@@ -4,10 +4,10 @@ require('dotenv').config();
 
 // Configuración exacta de tu MySQL en Railway
 const dbConfig = {
-    host: 'gondola.proxy.rlwy.net',
-    port: 29190,
+    host: 'interchange.proxy.rlwy.net',
+    port: 55821,
     user: 'root',
-    password: 'rwqaWmQZieEweZGMtPBtjKCaKkAFvMEQ',
+    password: 'jrYHjccWYOFydWBzKpvPlGJQnnqTNjpF',
     database: 'railway',
     ssl: {
         rejectUnauthorized: false

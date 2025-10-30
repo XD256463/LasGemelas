@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Rápido</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-3">
+        <h2>🔍 Diagnóstico Rápido</h2>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>1. Test Servidor</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary btn-sm" onclick="testServer()">Test</button>
+                        <div id="server-result" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>2. Test Registro</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-success btn-sm" onclick="testRegistro()">Test</button>
+                        <div id="registro-result" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>3. Test Técnicos</h5>
+                    </div>
+                    <div class="card-body">
+                        <input type="text" id="techCode" class="form-control form-control-sm mb-2" value="TECH_001">
+                        <button class="btn btn-warning btn-sm" onclick="testTecnicos()">Test</button>
+                        <div id="tech-result" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>4. Test BD</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-info btn-sm" onclick="testBD()">Test</button>
+                        <div id="bd-result" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testServer() {
+            const result = document.getElementById('server-result');
+            result.innerHTML = '<small class="text-info">Probando...</small>';
+            
+            try {
+                const response = await fetch('/api/routes');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = '<small class="text-success">✅ Servidor OK</small>';
+                } else {
+                    result.innerHTML = '<small class="text-danger">❌ Error servidor</small>';
+                }
+            } catch (error) {
+                result.innerHTML = '<small class="text-danger">❌ Sin conexión</small>';
+            }
+        }
+
+        async function testRegistro() {
+            const result = document.getElementById('registro-result');
+            result.innerHTML = '<small class="text-info">Probando...</small>';
+            
+            const userData = {
+                codigo: `U${Date.now()}`,
+                nombre: 'Test',
+                apellido: 'User',
+                correo: `test${Date.now()}@test.com`,
+                contrasena: 'Test123@'
+            };
+            
+            try {
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<small class="text-success">✅ Registro OK (ID: ${data.userId})</small>`;
+                } else {
+                    result.innerHTML = `<small class="text-danger">❌ ${data.error}</small>`;
+                }
+            } catch (error) {
+                result.innerHTML = '<small class="text-danger">❌ Error conexión</small>';
+            }
+        }
+
+        async function testTecnicos() {
+            const result = document.getElementById('tech-result');
+            const techCode = document.getElementById('techCode').value;
+            result.innerHTML = '<small class="text-info">Probando...</small>';
+            
+            try {
+                const response = await fetch(`/api/usuarios-tech?techCode=${techCode}`, {
+                    headers: { 'x-tech-code': techCode }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<small class="text-success">✅ Técnicos OK (${data.usuarios.length} usuarios)</small>`;
+                } else {
+                    result.innerHTML = `<small class="text-danger">❌ ${data.error}</small>`;
+                }
+            } catch (error) {
+                result.innerHTML = '<small class="text-danger">❌ Error conexión</small>';
+            }
+        }
+
+        async function testBD() {
+            const result = document.getElementById('bd-result');
+            result.innerHTML = '<small class="text-info">Probando...</small>';
+            
+            try {
+                const response = await fetch('/api/test-db');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<small class="text-success">✅ BD OK (${data.totalUsuarios} usuarios)</small>`;
+                } else {
+                    result.innerHTML = `<small class="text-danger">❌ ${data.error}</small>`;
+                }
+            } catch (error) {
+                result.innerHTML = '<small class="text-danger">❌ Error conexión</small>';
+            }
+        }
+
+        // Auto-test al cargar
+        window.onload = function() {
+            setTimeout(testServer, 500);
+            setTimeout(testBD, 1000);
+        };
+    </script>
+</body>
+</html>

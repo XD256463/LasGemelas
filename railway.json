@@ -4,10 +4,8 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "node server-clean.js",
+    "startCommand": "node server-final.js",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10,
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 300
+    "restartPolicyMaxRetries": 10
   }
 }

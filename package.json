@@ -2,7 +2,7 @@
   "name": "las-gemelas",
   "version": "1.0.0",
   "description": "Aplicación web Las Gemelas con MySQL",
-  "main": "server.js",
+  "main": "server-final.js",
   "scripts": {
     "start": "node server-final.js",
     "dev": "nodemon server-final.js",

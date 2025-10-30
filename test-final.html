@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Final - Las Gemelas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .test-card { margin-bottom: 20px; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">🧪 Test Final - Las Gemelas</h1>
+        
+        <!-- Test 1: Conexión BD -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5>1. Test Conexión Base de Datos</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-primary" onclick="testDB()">Probar Conexión BD</button>
+                <div id="db-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Test 2: Rutas Disponibles -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5>2. Test Rutas Disponibles</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-info" onclick="testRoutes()">Ver Rutas</button>
+                <div id="routes-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Test 3: Registro Usuario -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5>3. Test Registro Usuario</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-success" onclick="testRegistro()">Registrar Usuario Test</button>
+                <div id="registro-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Test 4: Técnicos -->
+        <div class="card test-card">
+            <div class="card-header">
+                <h5>4. Test Códigos Técnicos</h5>
+            </div>
+            <div class="card-body">
+                <input type="text" id="techCode" class="form-control mb-2" value="TECH_001" placeholder="Código técnico">
+                <button class="btn btn-warning me-2" onclick="testTecnicos()">Ver Técnicos</button>
+                <button class="btn btn-danger" onclick="testUsuariosTech()">Ver Usuarios (Técnico)</button>
+                <div id="tech-result" class="result" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Resultados Generales -->
+        <div class="card">
+            <div class="card-header">
+                <h5>📊 Resumen de Pruebas</h5>
+            </div>
+            <div class="card-body">
+                <div id="summary"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            db: false,
+            routes: false,
+            registro: false,
+            tecnicos: false
+        };
+
+        function updateSummary() {
+            const summary = document.getElementById('summary');
+            const total = Object.keys(testResults).length;
+            const passed = Object.values(testResults).filter(r => r).length;
+            
+            summary.innerHTML = `
+                <div class="progress mb-2">
+                    <div class="progress-bar ${passed === total ? 'bg-success' : 'bg-warning'}" 
+                         style="width: ${(passed/total)*100}%">
+                        ${passed}/${total} pruebas pasadas
+                    </div>
+                </div>
+                <small>
+                    ${testResults.db ? '✅' : '❌'} Base de Datos | 
+                    ${testResults.routes ? '✅' : '❌'} Rutas | 
+                    ${testResults.registro ? '✅' : '❌'} Registro | 
+                    ${testResults.tecnicos ? '✅' : '❌'} Técnicos
+                </small>
+            `;
+        }
+
+        async function testDB() {
+            const resultDiv = document.getElementById('db-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '🔄 Probando conexión...';
+            
+            try {
+                const response = await fetch('/api/test-db');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Conexión exitosa</strong><br>
+                        📊 Total usuarios: ${result.totalUsuarios}<br>
+                        🏠 Host: ${result.host}<br>
+                        📋 Tabla usuarios: ${result.tablaUsuarios}
+                    `;
+                    testResults.db = true;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Error: ${result.error}`;
+                    testResults.db = false;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error de conexión: ${error.message}`;
+                testResults.db = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testRoutes() {
+            const resultDiv = document.getElementById('routes-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '🔄 Obteniendo rutas...';
+            
+            try {
+                const response = await fetch('/api/routes');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    let html = '✅ <strong>Rutas disponibles:</strong><br>';
+                    
+                    Object.keys(result.routes).forEach(category => {
+                        html += `<br><strong>${category.toUpperCase()}:</strong><br>`;
+                        result.routes[category].forEach(route => {
+                            html += `• ${route}<br>`;
+                        });
+                    });
+                    
+                    html += `<br><strong>Códigos técnico:</strong> ${result.codigosTecnico.join(', ')}`;
+                    resultDiv.innerHTML = html;
+                    testResults.routes = true;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Error: ${result.error}`;
+                    testResults.routes = false;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                testResults.routes = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testRegistro() {
+            const resultDiv = document.getElementById('registro-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '🔄 Registrando usuario test...';
+            
+            const timestamp = Date.now();
+            const userData = {
+                codigo: `U${timestamp}`,
+                nombre: 'Test',
+                apellido: 'Usuario',
+                correo: `test${timestamp}@ejemplo.com`,
+                contrasena: 'Test123@',
+                telefono: '123456789',
+                direccion: 'Dirección de prueba'
+            };
+            
+            try {
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Usuario registrado exitosamente</strong><br>
+                        🆔 ID: ${result.userId}<br>
+                        🏷️ Código: ${result.codigo}<br>
+                        📧 Correo: ${userData.correo}
+                    `;
+                    testResults.registro = true;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Error: ${result.error}`;
+                    testResults.registro = false;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                testResults.registro = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testTecnicos() {
+            const resultDiv = document.getElementById('tech-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '🔄 Verificando técnicos...';
+            
+            try {
+                const response = await fetch('/api/debug/tecnicos');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    let html = '✅ <strong>Técnicos disponibles:</strong><br>';
+                    
+                    result.data.forEach(tech => {
+                        html += `• <strong>${tech.codigo}</strong> - ${tech.nombre} (${tech.email}) - ${tech.activo ? 'Activo' : 'Inactivo'}<br>`;
+                    });
+                    
+                    resultDiv.innerHTML = html;
+                    testResults.tecnicos = true;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Error: ${result.error}`;
+                    testResults.tecnicos = false;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                testResults.tecnicos = false;
+            }
+            
+            updateSummary();
+        }
+
+        async function testUsuariosTech() {
+            const techCode = document.getElementById('techCode').value;
+            const resultDiv = document.getElementById('tech-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = `🔄 Obteniendo usuarios con código ${techCode}...`;
+            
+            try {
+                const response = await fetch(`/api/usuarios-tech?techCode=${techCode}`, {
+                    headers: {
+                        'x-tech-code': techCode
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        ✅ <strong>Acceso técnico exitoso</strong><br>
+                        👥 Total usuarios: ${result.stats.total}<br>
+                        📅 Registros hoy: ${result.stats.hoy}<br>
+                        📊 Esta semana: ${result.stats.semana}<br>
+                        📋 Usuarios mostrados: ${result.usuarios.length}
+                    `;
+                    testResults.tecnicos = true;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Error: ${result.error}`;
+                    testResults.tecnicos = false;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                testResults.tecnicos = false;
+            }
+            
+            updateSummary();
+        }
+
+        // Ejecutar tests automáticamente al cargar
+        window.onload = function() {
+            updateSummary();
+            setTimeout(() => {
+                testDB();
+                setTimeout(() => testRoutes(), 1000);
+            }, 500);
+        };
+    </script>
+</body>
+</html>

@@ -362,7 +362,7 @@
                         direccion: document.getElementById('registerAddress').value.trim()
                     };
 
-                    const response = await fetch('/api/registro-nuevo', {
+                    const response = await fetch('/api/registro', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -458,7 +458,7 @@
             };
             
             try {
-                const response = await fetch('/api/registro-nuevo', {
+                const response = await fetch('/api/registro', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

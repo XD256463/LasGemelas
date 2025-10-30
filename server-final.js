@@ -1093,6 +1093,116 @@ app.get('/api/mis-alquileres', verifyToken, async (req, res) => {
 
 // ===== RUTAS DE DEBUG =====
 
+// Test de comparación de contraseñas
+app.post('/api/debug/test-password', async (req, res) => {
+    try {
+        const { password, hash, codigo } = req.body;
+        
+        console.log('🧪 DEBUG - Test de contraseña:', {
+            codigo: codigo,
+            passwordLength: password ? password.length : 0,
+            hashLength: hash ? hash.length : 0,
+            hashStart: hash ? hash.substring(0, 10) : 'N/A'
+        });
+        
+        if (!password || !hash) {
+            return res.status(400).json({ 
+                error: 'Password y hash son requeridos',
+                received: { password: !!password, hash: !!hash }
+            });
+        }
+        
+        // Información del hash
+        const hashInfo = {
+            length: hash.length,
+            startsWithBcrypt: hash.startsWith('$2b$') || hash.startsWith('$2a$') || hash.startsWith('$2y$'),
+            algorithm: hash.substring(0, 4),
+            rounds: hash.split('$')[2] || 'N/A',
+            preview: hash.substring(0, 20) + '...'
+        };
+        
+        // Probar comparación
+        let comparisonResult = false;
+        let comparisonError = null;
+        
+        try {
+            comparisonResult = await bcrypt.compare(password, hash);
+            console.log('🔐 Resultado comparación bcrypt:', comparisonResult);
+        } catch (error) {
+            comparisonError = error.message;
+            console.error('❌ Error en comparación bcrypt:', error);
+        }
+        
+        // Buscar usuario en BD para comparar
+        let usuarioBD = null;
+        if (codigo) {
+            try {
+                const connection = await pool.getConnection();
+                const [usuarios] = await connection.execute(
+                    'SELECT codigo, nombre, apellido, contrasena FROM usuarios WHERE codigo = ?', 
+                    [codigo]
+                );
+                connection.release();
+                
+                if (usuarios.length > 0) {
+                    usuarioBD = {
+                        codigo: usuarios[0].codigo,
+                        nombre: usuarios[0].nombre,
+                        apellido: usuarios[0].apellido,
+                        hashEnBD: usuarios[0].contrasena.substring(0, 20) + '...',
+                        hashCompleto: usuarios[0].contrasena,
+                        hashCoincide: usuarios[0].contrasena === hash
+                    };
+                }
+            } catch (error) {
+                console.error('❌ Error consultando usuario:', error);
+            }
+        }
+        
+        const resultado = {
+            success: true,
+            password: {
+                length: password.length,
+                preview: password.substring(0, 3) + '*'.repeat(password.length - 3)
+            },
+            hash: hashInfo,
+            comparison: {
+                result: comparisonResult,
+                error: comparisonError,
+                message: comparisonResult ? 'Contraseña VÁLIDA' : 'Contraseña INVÁLIDA'
+            },
+            usuario: usuarioBD,
+            diagnosis: {
+                hashValido: hashInfo.startsWithBcrypt && hashInfo.length > 50,
+                problemasPosibles: []
+            }
+        };
+        
+        // Diagnóstico automático
+        if (!hashInfo.startsWithBcrypt) {
+            resultado.diagnosis.problemasPosibles.push('Hash no es formato bcrypt válido');
+        }
+        if (hashInfo.length < 50) {
+            resultado.diagnosis.problemasPosibles.push('Hash muy corto para bcrypt');
+        }
+        if (comparisonError) {
+            resultado.diagnosis.problemasPosibles.push(`Error en bcrypt.compare: ${comparisonError}`);
+        }
+        if (usuarioBD && !usuarioBD.hashCoincide) {
+            resultado.diagnosis.problemasPosibles.push('Hash enviado no coincide con hash en BD');
+        }
+        
+        res.json(resultado);
+        
+    } catch (error) {
+        console.error('❌ Error en debug test-password:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
 // Test de conexión a BD
 app.get('/api/test-db', async (req, res) => {
     try {

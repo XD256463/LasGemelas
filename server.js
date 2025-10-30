@@ -129,50 +129,35 @@ const verifyToken = (req, res, next) => {
 // Rutas de autenticación
 app.post('/api/registro', async (req, res) => {
     try {
-        console.log('=== REGISTRO DEBUG ===');
+        console.log('=== REGISTRO PRINCIPAL ===');
         console.log('Body recibido:', JSON.stringify(req.body, null, 2));
+        console.log('Content-Type:', req.headers['content-type']);
         
-        // Manejar tanto formato nuevo como formato antiguo
-        let codigo, nombre, apellido, correo, contrasena, telefono, direccion;
+        // Extraer datos directamente
+        const { codigo, nombre, apellido, correo, contrasena, telefono, direccion } = req.body;
         
-        // Formato nuevo (correcto)
-        if (req.body.codigo && req.body.correo && req.body.contrasena) {
-            ({ codigo, nombre, apellido, correo, contrasena, telefono, direccion } = req.body);
-            console.log('Usando formato NUEVO');
-        }
-        // Formato antiguo (fallback)
-        else if (req.body.email && req.body.password) {
-            console.log('Usando formato ANTIGUO - convirtiendo...');
-            codigo = req.body.codigo || `U${Date.now()}`;
-            nombre = req.body.nombre || req.body.name || '';
-            apellido = req.body.apellido || req.body.lastName || 'Usuario';
-            correo = req.body.email;
-            contrasena = req.body.password;
-            telefono = req.body.telefono || req.body.phone;
-            direccion = req.body.direccion || req.body.address;
-        }
-        // Si no hay ningún formato reconocible
-        else {
-            console.log('Formato no reconocido');
-            return res.status(400).json({ 
-                error: 'Formato de datos no válido. Se requiere: codigo, nombre, apellido, correo, contrasena',
-                recibido: Object.keys(req.body)
-            });
-        }
-        
-        console.log('Datos procesados:', { codigo, nombre, apellido, correo, contrasena: '***' });
+        console.log('Datos extraídos:', {
+            codigo: codigo || 'FALTANTE',
+            nombre: nombre || 'FALTANTE', 
+            apellido: apellido || 'FALTANTE',
+            correo: correo || 'FALTANTE',
+            contrasena: contrasena ? 'PRESENTE' : 'FALTANTE'
+        });
 
         // Validar datos requeridos
-        if (!codigo || !nombre || !correo || !contrasena) {
-            console.log('Datos faltantes después del procesamiento');
+        if (!codigo || !nombre || !apellido || !correo || !contrasena) {
+            console.log('❌ VALIDACIÓN FALLIDA');
             return res.status(400).json({ 
-                error: 'Código, nombre, correo y contraseña son requeridos'
+                error: 'Código, nombre, apellido, correo y contraseña son requeridos',
+                debug: {
+                    codigo: !!codigo,
+                    nombre: !!nombre,
+                    apellido: !!apellido,
+                    correo: !!correo,
+                    contrasena: !!contrasena,
+                    recibido: req.body
+                }
             });
-        }
-
-        // Asegurar que apellido tenga un valor
-        if (!apellido) {
-            apellido = 'Usuario';
         }
 
         // Validar que el código comience con "U"
@@ -731,6 +716,104 @@ app.delete('/api/usuarios-tech/:id', async (req, res) => {
         });
     } catch (error) {
         console.error('Error eliminando usuario:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// Endpoint de prueba para debug
+app.post('/api/test-registro', (req, res) => {
+    console.log('=== TEST REGISTRO ===');
+    console.log('Headers:', req.headers);
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    console.log('Content-Type:', req.headers['content-type']);
+    
+    res.json({
+        success: true,
+        message: 'Datos recibidos correctamente',
+        recibido: req.body,
+        headers: req.headers['content-type']
+    });
+});
+
+// Endpoint de registro NUEVO y limpio
+app.post('/api/registro-nuevo', async (req, res) => {
+    try {
+        console.log('=== REGISTRO NUEVO ===');
+        console.log('Body:', JSON.stringify(req.body, null, 2));
+        
+        const { codigo, nombre, apellido, correo, contrasena, telefono, direccion } = req.body;
+        
+        // Validar campos requeridos
+        if (!codigo) {
+            return res.status(400).json({ error: 'El código es requerido' });
+        }
+        if (!nombre) {
+            return res.status(400).json({ error: 'El nombre es requerido' });
+        }
+        if (!apellido) {
+            return res.status(400).json({ error: 'El apellido es requerido' });
+        }
+        if (!correo) {
+            return res.status(400).json({ error: 'El correo es requerido' });
+        }
+        if (!contrasena) {
+            return res.status(400).json({ error: 'La contraseña es requerida' });
+        }
+        
+        // Validar formato del código
+        if (!codigo.startsWith('U')) {
+            return res.status(400).json({ error: 'El código debe comenzar con "U"' });
+        }
+        
+        // Validar formato del correo
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(correo)) {
+            return res.status(400).json({ error: 'Formato de correo inválido' });
+        }
+        
+        console.log('✅ Validaciones pasadas');
+        
+        const connection = await pool.getConnection();
+        
+        // Verificar si el código ya existe
+        const [existingCode] = await connection.execute('SELECT id FROM usuarios WHERE codigo = ?', [codigo]);
+        if (existingCode.length > 0) {
+            connection.release();
+            return res.status(400).json({ error: 'El código ya está registrado' });
+        }
+        
+        // Verificar si el correo ya existe
+        const [existingEmail] = await connection.execute('SELECT id FROM usuarios WHERE correo = ?', [correo]);
+        if (existingEmail.length > 0) {
+            connection.release();
+            return res.status(400).json({ error: 'El correo ya está registrado' });
+        }
+        
+        // Encriptar contraseña
+        const hashedPassword = await bcrypt.hash(contrasena, 10);
+        
+        // Insertar usuario
+        const [result] = await connection.execute(
+            'INSERT INTO usuarios (codigo, nombre, apellido, correo, contrasena, telefono, direccion, rol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [codigo, nombre, apellido, correo, hashedPassword, telefono || null, direccion || null, 'cliente']
+        );
+        
+        connection.release();
+        
+        console.log('✅ Usuario registrado con ID:', result.insertId);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Usuario registrado exitosamente',
+            userId: result.insertId,
+            codigo: codigo
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en registro nuevo:', error);
         res.status(500).json({ 
             error: 'Error interno del servidor',
             details: error.message 

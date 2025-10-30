@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Rutas Técnicos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Test Rutas de Técnicos</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="techCode" class="form-label">Código de Técnico:</label>
+                            <input type="text" class="form-control" id="techCode" value="TECH_001">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <button class="btn btn-primary w-100" onclick="testRoute('/api/usuarios-tech')">
+                                    Test /api/usuarios-tech
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <button class="btn btn-info w-100" onclick="testRoute('/api/tech/stats')">
+                                    Test /api/tech/stats
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <button class="btn btn-success w-100" onclick="testRoute('/api/debug/tecnicos')">
+                                    Test /api/debug/tecnicos
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <button class="btn btn-warning w-100" onclick="testRoute('/api/tech-status')">
+                                    Test /api/tech-status
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <h5>Resultados:</h5>
+                        <div id="results" style="max-height: 400px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testRoute(route) {
+            const techCode = document.getElementById('techCode').value;
+            const resultsDiv = document.getElementById('results');
+            
+            const resultItem = document.createElement('div');
+            resultItem.className = 'alert alert-info mb-2';
+            resultItem.innerHTML = `<strong>${route}</strong> - Probando...`;
+            resultsDiv.appendChild(resultItem);
+            
+            try {
+                let url = route;
+                let options = {
+                    method: 'GET',
+                    headers: {
+                        'x-tech-code': techCode,
+                        'techCode': techCode,
+                        'techcode': techCode
+                    }
+                };
+                
+                // Para rutas que requieren query params
+                if (route === '/api/usuarios-tech') {
+                    url += '?techCode=' + techCode;
+                }
+                
+                const response = await fetch(url, options);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultItem.className = 'alert alert-success mb-2';
+                    resultItem.innerHTML = `
+                        <strong>✅ ${route}</strong><br>
+                        <small>Status: ${response.status}</small><br>
+                        <pre style="font-size: 12px; max-height: 100px; overflow-y: auto;">${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                } else {
+                    resultItem.className = 'alert alert-danger mb-2';
+                    resultItem.innerHTML = `
+                        <strong>❌ ${route}</strong><br>
+                        <small>Status: ${response.status}</small><br>
+                        <small>Error: ${result.error || 'Error desconocido'}</small>
+                    `;
+                }
+            } catch (error) {
+                resultItem.className = 'alert alert-danger mb-2';
+                resultItem.innerHTML = `
+                    <strong>❌ ${route}</strong><br>
+                    <small>Error de conexión: ${error.message}</small>
+                `;
+            }
+            
+            // Scroll al final
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        // Test automático al cargar
+        window.onload = function() {
+            setTimeout(() => {
+                testRoute('/api/debug/tecnicos');
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

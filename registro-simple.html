@@ -191,10 +191,17 @@
                     <!-- Mensaje -->
                     <div id="registerMessage" class="mb-3 text-center fw-bold"></div>
 
-                    <!-- Botón -->
+                    <!-- Botones -->
                     <div class="text-center">
                         <button type="submit" id="registerButton" class="btn btn-registro btn-lg" disabled>
                             <i class="bi bi-check-circle"></i> Registrar Cuenta
+                        </button>
+                        <br><br>
+                        <button type="button" class="btn btn-outline-info me-2" onclick="testConnection()">
+                            <i class="bi bi-bug"></i> Test Debug
+                        </button>
+                        <button type="button" class="btn btn-outline-success" onclick="testRegistroNuevo()">
+                            <i class="bi bi-plus"></i> Test Registro
                         </button>
                     </div>
                 </form>
@@ -355,7 +362,7 @@
                         direccion: document.getElementById('registerAddress').value.trim()
                     };
 
-                    const response = await fetch('/api/registro', {
+                    const response = await fetch('/api/registro-nuevo', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -391,6 +398,91 @@
             // Validación inicial
             validateForm();
         });
+        
+        // Función de test para debug
+        window.testConnection = async function() {
+            const messageElement = document.getElementById('registerMessage');
+            messageElement.textContent = '🔍 Probando conexión...';
+            messageElement.style.color = '#007bff';
+            
+            const testData = {
+                codigo: 'U12345',
+                nombre: 'Test',
+                apellido: 'Usuario',
+                correo: 'test@ejemplo.com',
+                contrasena: 'Test123@'
+            };
+            
+            try {
+                const response = await fetch('/api/test-registro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    messageElement.textContent = '✅ Conexión exitosa - Datos recibidos correctamente';
+                    messageElement.style.color = '#28a745';
+                    console.log('Test exitoso:', result);
+                } else {
+                    messageElement.textContent = '❌ Error en test: ' + result.error;
+                    messageElement.style.color = '#dc3545';
+                    console.log('Test fallido:', result);
+                }
+            } catch (error) {
+                messageElement.textContent = '❌ Error de conexión: ' + error.message;
+                messageElement.style.color = '#dc3545';
+                console.log('Error de conexión:', error);
+            }
+        };
+        
+        // Función para probar el registro nuevo
+        window.testRegistroNuevo = async function() {
+            const messageElement = document.getElementById('registerMessage');
+            messageElement.textContent = '🧪 Probando registro nuevo...';
+            messageElement.style.color = '#007bff';
+            
+            const timestamp = Date.now();
+            const testData = {
+                codigo: `U${timestamp}`,
+                nombre: 'Test',
+                apellido: 'Usuario',
+                correo: `test${timestamp}@ejemplo.com`,
+                contrasena: 'Test123@',
+                telefono: '123456789',
+                direccion: 'Dirección de prueba'
+            };
+            
+            try {
+                const response = await fetch('/api/registro-nuevo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    messageElement.textContent = `✅ Registro exitoso - Usuario ID: ${result.userId}`;
+                    messageElement.style.color = '#28a745';
+                    console.log('Registro exitoso:', result);
+                } else {
+                    messageElement.textContent = '❌ Error en registro: ' + result.error;
+                    messageElement.style.color = '#dc3545';
+                    console.log('Registro fallido:', result);
+                }
+            } catch (error) {
+                messageElement.textContent = '❌ Error de conexión: ' + error.message;
+                messageElement.style.color = '#dc3545';
+                console.log('Error de conexión:', error);
+            }
+        };
     </script>
 </body>
 </html>

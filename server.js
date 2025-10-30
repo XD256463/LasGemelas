@@ -821,6 +821,33 @@ app.post('/api/registro-nuevo', async (req, res) => {
     }
 });
 
+// Endpoint para listar rutas disponibles
+app.get('/api/routes', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Rutas disponibles en el servidor',
+        routes: {
+            registro: [
+                'POST /api/registro',
+                'POST /api/registro-nuevo', 
+                'POST /api/test-registro'
+            ],
+            tecnicos: [
+                'GET /api/usuarios-tech',
+                'POST /api/usuarios-tech',
+                'DELETE /api/usuarios-tech/:id',
+                'GET /api/tech/stats',
+                'GET /api/debug/tecnicos'
+            ],
+            debug: [
+                'GET /api/test-db',
+                'GET /api/debug-usuarios',
+                'GET /api/routes'
+            ]
+        }
+    });
+});
+
 // Servir archivos estáticos
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
@@ -1151,11 +1178,44 @@ app.post('/api/tech/test', (req, res) => {
     });
 });
 
+// Middleware para manejar rutas no encontradas (DEBE IR AL FINAL)
+app.use('*', (req, res) => {
+    console.log(`❌ Ruta no encontrada: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+        success: false,
+        error: 'Ruta no encontrada',
+        path: req.originalUrl,
+        method: req.method,
+        availableRoutes: [
+            'GET /api/test-db',
+            'GET /api/debug-usuarios', 
+            'POST /api/registro',
+            'POST /api/registro-nuevo',
+            'POST /api/test-registro',
+            'GET /api/usuarios-tech',
+            'POST /api/usuarios-tech',
+            'DELETE /api/usuarios-tech/:id',
+            'GET /api/tech/stats',
+            'GET /api/debug/tecnicos'
+        ]
+    });
+});
+
 // Inicializar servidor
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log('Códigos de técnico disponibles:', Object.keys(TECH_CODES).join(', '));
+    
+    // Mostrar rutas disponibles
+    console.log('🚀 Rutas disponibles:');
+    console.log('  POST /api/registro');
+    console.log('  POST /api/registro-nuevo');
+    console.log('  POST /api/test-registro');
+    console.log('  GET  /api/usuarios-tech');
+    console.log('  POST /api/usuarios-tech');
+    console.log('  GET  /api/tech/stats');
+    console.log('  GET  /api/debug/tecnicos');
 
     // Inicializar base de datos después de que el servidor esté corriendo
     initializeDatabase().then(success => {

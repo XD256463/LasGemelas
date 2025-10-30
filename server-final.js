@@ -61,6 +61,69 @@ async function initializeDatabase() {
             )
         `);
         
+        // Crear tabla de productos/disfraces si no existe
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS productos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(150) NOT NULL,
+                descripcion TEXT,
+                precio_compra DECIMAL(10,2),
+                precio_alquiler DECIMAL(10,2),
+                categoria VARCHAR(50),
+                talla VARCHAR(20),
+                color VARCHAR(30),
+                disponible_compra BOOLEAN DEFAULT TRUE,
+                disponible_alquiler BOOLEAN DEFAULT TRUE,
+                stock_compra INT DEFAULT 0,
+                stock_alquiler INT DEFAULT 0,
+                imagen VARCHAR(255),
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Crear tabla de compras
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS compras (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                producto_id INT NOT NULL,
+                cantidad INT NOT NULL DEFAULT 1,
+                precio_unitario DECIMAL(10,2) NOT NULL,
+                precio_total DECIMAL(10,2) NOT NULL,
+                estado ENUM('pendiente', 'confirmada', 'enviada', 'entregada', 'cancelada') DEFAULT 'pendiente',
+                metodo_pago VARCHAR(50),
+                direccion_envio TEXT,
+                fecha_compra TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_entrega DATE,
+                notas TEXT,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+            )
+        `);
+        
+        // Crear tabla de alquileres
+        await connection.execute(`
+            CREATE TABLE IF NOT EXISTS alquileres (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                producto_id INT NOT NULL,
+                cantidad INT NOT NULL DEFAULT 1,
+                precio_unitario DECIMAL(10,2) NOT NULL,
+                precio_total DECIMAL(10,2) NOT NULL,
+                fecha_inicio DATE NOT NULL,
+                fecha_fin DATE NOT NULL,
+                dias_alquiler INT NOT NULL,
+                estado ENUM('reservado', 'activo', 'devuelto', 'vencido', 'cancelado') DEFAULT 'reservado',
+                metodo_pago VARCHAR(50),
+                direccion_entrega TEXT,
+                fecha_reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                deposito DECIMAL(10,2) DEFAULT 0,
+                notas TEXT,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+            )
+        `);
+        
         connection.release();
         console.log('✅ Base de datos inicializada correctamente');
         return true;
@@ -292,6 +355,300 @@ app.delete('/api/usuarios-tech/:id', verifyTechCode, async (req, res) => {
     }
 });
 
+// ===== RUTAS DE PRODUCTOS =====
+
+// Obtener todos los productos
+app.get('/api/productos', async (req, res) => {
+    try {
+        console.log('🛍️ PRODUCTOS - Obteniendo catálogo');
+        
+        const connection = await pool.getConnection();
+        const [productos] = await connection.execute(`
+            SELECT id, nombre, descripcion, precio_compra, precio_alquiler, 
+                   categoria, talla, color, disponible_compra, disponible_alquiler,
+                   stock_compra, stock_alquiler, imagen
+            FROM productos 
+            WHERE (disponible_compra = TRUE OR disponible_alquiler = TRUE)
+            ORDER BY categoria, nombre
+        `);
+        connection.release();
+        
+        res.json({
+            success: true,
+            productos: productos
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo productos:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// ===== RUTAS DE COMPRAS =====
+
+// Realizar compra
+app.post('/api/compras', async (req, res) => {
+    try {
+        console.log('💰 COMPRA - Nueva compra:', JSON.stringify(req.body, null, 2));
+        
+        const { 
+            usuario_codigo, 
+            producto_id, 
+            cantidad, 
+            metodo_pago, 
+            direccion_envio,
+            notas 
+        } = req.body;
+        
+        if (!usuario_codigo || !producto_id || !cantidad) {
+            return res.status(400).json({ 
+                error: 'Código de usuario, producto y cantidad son requeridos' 
+            });
+        }
+        
+        const connection = await pool.getConnection();
+        
+        // Obtener usuario por código
+        const [usuarios] = await connection.execute('SELECT id FROM usuarios WHERE codigo = ?', [usuario_codigo]);
+        if (usuarios.length === 0) {
+            connection.release();
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        const usuario_id = usuarios[0].id;
+        
+        // Obtener producto y verificar disponibilidad
+        const [productos] = await connection.execute(`
+            SELECT id, nombre, precio_compra, stock_compra, disponible_compra 
+            FROM productos 
+            WHERE id = ? AND disponible_compra = TRUE
+        `, [producto_id]);
+        
+        if (productos.length === 0) {
+            connection.release();
+            return res.status(404).json({ error: 'Producto no disponible para compra' });
+        }
+        
+        const producto = productos[0];
+        
+        if (producto.stock_compra < cantidad) {
+            connection.release();
+            return res.status(400).json({ error: 'Stock insuficiente' });
+        }
+        
+        const precio_unitario = producto.precio_compra;
+        const precio_total = precio_unitario * cantidad;
+        
+        // Insertar compra
+        const [result] = await connection.execute(`
+            INSERT INTO compras (usuario_id, producto_id, cantidad, precio_unitario, precio_total, 
+                               metodo_pago, direccion_envio, notas) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [usuario_id, producto_id, cantidad, precio_unitario, precio_total, 
+            metodo_pago, direccion_envio, notas]);
+        
+        // Actualizar stock
+        await connection.execute(`
+            UPDATE productos 
+            SET stock_compra = stock_compra - ? 
+            WHERE id = ?
+        `, [cantidad, producto_id]);
+        
+        connection.release();
+        
+        console.log('✅ Compra registrada con ID:', result.insertId);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Compra registrada exitosamente',
+            compra_id: result.insertId,
+            producto: producto.nombre,
+            cantidad: cantidad,
+            precio_total: precio_total
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en compra:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// ===== RUTAS DE ALQUILERES =====
+
+// Realizar alquiler
+app.post('/api/alquileres', async (req, res) => {
+    try {
+        console.log('🏠 ALQUILER - Nuevo alquiler:', JSON.stringify(req.body, null, 2));
+        
+        const { 
+            usuario_codigo, 
+            producto_id, 
+            cantidad,
+            fecha_inicio,
+            fecha_fin,
+            metodo_pago, 
+            direccion_entrega,
+            deposito,
+            notas 
+        } = req.body;
+        
+        if (!usuario_codigo || !producto_id || !cantidad || !fecha_inicio || !fecha_fin) {
+            return res.status(400).json({ 
+                error: 'Código de usuario, producto, cantidad y fechas son requeridos' 
+            });
+        }
+        
+        const connection = await pool.getConnection();
+        
+        // Obtener usuario por código
+        const [usuarios] = await connection.execute('SELECT id FROM usuarios WHERE codigo = ?', [usuario_codigo]);
+        if (usuarios.length === 0) {
+            connection.release();
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        const usuario_id = usuarios[0].id;
+        
+        // Obtener producto y verificar disponibilidad
+        const [productos] = await connection.execute(`
+            SELECT id, nombre, precio_alquiler, stock_alquiler, disponible_alquiler 
+            FROM productos 
+            WHERE id = ? AND disponible_alquiler = TRUE
+        `, [producto_id]);
+        
+        if (productos.length === 0) {
+            connection.release();
+            return res.status(404).json({ error: 'Producto no disponible para alquiler' });
+        }
+        
+        const producto = productos[0];
+        
+        if (producto.stock_alquiler < cantidad) {
+            connection.release();
+            return res.status(400).json({ error: 'Stock insuficiente para alquiler' });
+        }
+        
+        // Calcular días de alquiler
+        const inicio = new Date(fecha_inicio);
+        const fin = new Date(fecha_fin);
+        const dias_alquiler = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24));
+        
+        if (dias_alquiler <= 0) {
+            connection.release();
+            return res.status(400).json({ error: 'Las fechas de alquiler no son válidas' });
+        }
+        
+        const precio_unitario = producto.precio_alquiler;
+        const precio_total = precio_unitario * cantidad * dias_alquiler;
+        
+        // Insertar alquiler
+        const [result] = await connection.execute(`
+            INSERT INTO alquileres (usuario_id, producto_id, cantidad, precio_unitario, precio_total,
+                                  fecha_inicio, fecha_fin, dias_alquiler, metodo_pago, 
+                                  direccion_entrega, deposito, notas) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [usuario_id, producto_id, cantidad, precio_unitario, precio_total,
+            fecha_inicio, fecha_fin, dias_alquiler, metodo_pago, 
+            direccion_entrega, deposito || 0, notas]);
+        
+        // Actualizar stock (reservar)
+        await connection.execute(`
+            UPDATE productos 
+            SET stock_alquiler = stock_alquiler - ? 
+            WHERE id = ?
+        `, [cantidad, producto_id]);
+        
+        connection.release();
+        
+        console.log('✅ Alquiler registrado con ID:', result.insertId);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Alquiler registrado exitosamente',
+            alquiler_id: result.insertId,
+            producto: producto.nombre,
+            cantidad: cantidad,
+            dias_alquiler: dias_alquiler,
+            precio_total: precio_total
+        });
+        
+    } catch (error) {
+        console.error('❌ Error en alquiler:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// ===== RUTAS PARA TÉCNICOS - GESTIÓN DE TRANSACCIONES =====
+
+// Ver compras (para técnicos)
+app.get('/api/compras-tech', verifyTechCode, async (req, res) => {
+    try {
+        console.log('📊 TÉCNICOS - Obteniendo compras');
+        
+        const connection = await pool.getConnection();
+        const [compras] = await connection.execute(`
+            SELECT c.*, u.codigo as usuario_codigo, u.nombre as usuario_nombre, 
+                   u.apellido as usuario_apellido, p.nombre as producto_nombre
+            FROM compras c
+            JOIN usuarios u ON c.usuario_id = u.id
+            JOIN productos p ON c.producto_id = p.id
+            ORDER BY c.fecha_compra DESC
+            LIMIT 100
+        `);
+        connection.release();
+        
+        res.json({
+            success: true,
+            compras: compras
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo compras:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
+// Ver alquileres (para técnicos)
+app.get('/api/alquileres-tech', verifyTechCode, async (req, res) => {
+    try {
+        console.log('📊 TÉCNICOS - Obteniendo alquileres');
+        
+        const connection = await pool.getConnection();
+        const [alquileres] = await connection.execute(`
+            SELECT a.*, u.codigo as usuario_codigo, u.nombre as usuario_nombre, 
+                   u.apellido as usuario_apellido, p.nombre as producto_nombre
+            FROM alquileres a
+            JOIN usuarios u ON a.usuario_id = u.id
+            JOIN productos p ON a.producto_id = p.id
+            ORDER BY a.fecha_reserva DESC
+            LIMIT 100
+        `);
+        connection.release();
+        
+        res.json({
+            success: true,
+            alquileres: alquileres
+        });
+        
+    } catch (error) {
+        console.error('❌ Error obteniendo alquileres:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
 // ===== RUTAS DE DEBUG =====
 
 // Test de conexión a BD
@@ -337,6 +694,98 @@ app.get('/api/debug/tecnicos', (req, res) => {
     });
 });
 
+// Crear productos de ejemplo (solo para desarrollo)
+app.post('/api/debug/crear-productos', async (req, res) => {
+    try {
+        console.log('🎭 DEBUG - Creando productos de ejemplo');
+        
+        const connection = await pool.getConnection();
+        
+        const productosEjemplo = [
+            {
+                nombre: 'Disfraz de Superhéroe',
+                descripcion: 'Disfraz completo de superhéroe con capa y máscara',
+                precio_compra: 150000,
+                precio_alquiler: 25000,
+                categoria: 'Superhéroes',
+                talla: 'M',
+                color: 'Azul/Rojo',
+                stock_compra: 5,
+                stock_alquiler: 3
+            },
+            {
+                nombre: 'Disfraz de Princesa',
+                descripcion: 'Elegante vestido de princesa con accesorios',
+                precio_compra: 200000,
+                precio_alquiler: 35000,
+                categoria: 'Princesas',
+                talla: 'S',
+                color: 'Rosa',
+                stock_compra: 3,
+                stock_alquiler: 2
+            },
+            {
+                nombre: 'Disfraz de Pirata',
+                descripcion: 'Disfraz de pirata con sombrero y espada de juguete',
+                precio_compra: 120000,
+                precio_alquiler: 20000,
+                categoria: 'Aventura',
+                talla: 'L',
+                color: 'Negro/Rojo',
+                stock_compra: 4,
+                stock_alquiler: 2
+            },
+            {
+                nombre: 'Disfraz de Bruja',
+                descripcion: 'Disfraz de bruja con sombrero y varita mágica',
+                precio_compra: 100000,
+                precio_alquiler: 18000,
+                categoria: 'Halloween',
+                talla: 'M',
+                color: 'Negro/Morado',
+                stock_compra: 6,
+                stock_alquiler: 4
+            }
+        ];
+        
+        let insertados = 0;
+        
+        for (const producto of productosEjemplo) {
+            // Verificar si ya existe
+            const [existing] = await connection.execute('SELECT id FROM productos WHERE nombre = ?', [producto.nombre]);
+            
+            if (existing.length === 0) {
+                await connection.execute(`
+                    INSERT INTO productos (nombre, descripcion, precio_compra, precio_alquiler, 
+                                         categoria, talla, color, stock_compra, stock_alquiler,
+                                         disponible_compra, disponible_alquiler) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, TRUE)
+                `, [
+                    producto.nombre, producto.descripcion, producto.precio_compra, 
+                    producto.precio_alquiler, producto.categoria, producto.talla, 
+                    producto.color, producto.stock_compra, producto.stock_alquiler
+                ]);
+                insertados++;
+            }
+        }
+        
+        connection.release();
+        
+        res.json({
+            success: true,
+            message: `${insertados} productos de ejemplo creados`,
+            productos_creados: insertados
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creando productos:', error);
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            details: error.message 
+        });
+    }
+});
+
 // Listar rutas disponibles
 app.get('/api/routes', (req, res) => {
     res.json({
@@ -346,10 +795,21 @@ app.get('/api/routes', (req, res) => {
             registro: [
                 'POST /api/registro'
             ],
+            productos: [
+                'GET /api/productos'
+            ],
+            compras: [
+                'POST /api/compras'
+            ],
+            alquileres: [
+                'POST /api/alquileres'
+            ],
             tecnicos: [
                 'GET /api/usuarios-tech (requiere código de técnico)',
                 'POST /api/usuarios-tech (requiere código de técnico)',
-                'DELETE /api/usuarios-tech/:id (requiere código de técnico)'
+                'DELETE /api/usuarios-tech/:id (requiere código de técnico)',
+                'GET /api/compras-tech (requiere código de técnico)',
+                'GET /api/alquileres-tech (requiere código de técnico)'
             ],
             debug: [
                 'GET /api/test-db',

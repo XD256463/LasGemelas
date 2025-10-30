@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Compras y Alquileres</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>🛍️ Test Compras y Alquileres</h2>
+        
+        <!-- Test Productos -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>1. Test Productos</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-info" onclick="testProductos()">Ver Productos</button>
+                <div id="productos-result" class="mt-3"></div>
+            </div>
+        </div>
+        
+        <!-- Test Compra -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>2. Test Compra</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Código Usuario:</label>
+                        <input type="text" id="compra-usuario" class="form-control" value="U23201604">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">ID Producto:</label>
+                        <input type="number" id="compra-producto" class="form-control" value="1">
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Cantidad:</label>
+                        <input type="number" id="compra-cantidad" class="form-control" value="1">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Método Pago:</label>
+                        <select id="compra-pago" class="form-control">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="transferencia">Transferencia</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <button class="btn btn-success w-100" onclick="testCompra()">Realizar Compra</button>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label class="form-label">Dirección Envío:</label>
+                    <input type="text" id="compra-direccion" class="form-control" value="Calle 123 #45-67">
+                </div>
+                <div id="compra-result" class="mt-3"></div>
+            </div>
+        </div>
+        
+        <!-- Test Alquiler -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>3. Test Alquiler</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Código Usuario:</label>
+                        <input type="text" id="alquiler-usuario" class="form-control" value="U23201604">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">ID Producto:</label>
+                        <input type="number" id="alquiler-producto" class="form-control" value="1">
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Cantidad:</label>
+                        <input type="number" id="alquiler-cantidad" class="form-control" value="1">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Inicio:</label>
+                        <input type="date" id="alquiler-inicio" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin:</label>
+                        <input type="date" id="alquiler-fin" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Método Pago:</label>
+                        <select id="alquiler-pago" class="form-control">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="transferencia">Transferencia</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-8">
+                        <label class="form-label">Dirección Entrega:</label>
+                        <input type="text" id="alquiler-direccion" class="form-control" value="Calle 123 #45-67">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <button class="btn btn-warning w-100" onclick="testAlquiler()">Realizar Alquiler</button>
+                    </div>
+                </div>
+                <div id="alquiler-result" class="mt-3"></div>
+            </div>
+        </div>
+        
+        <!-- Test Técnicos -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>4. Test Gestión Técnicos</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Código Técnico:</label>
+                        <input type="text" id="tech-code" class="form-control" value="TECH_001">
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary w-100 mt-4" onclick="testComprasTech()">Ver Compras</button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-secondary w-100 mt-4" onclick="testAlquileresTech()">Ver Alquileres</button>
+                    </div>
+                </div>
+                <div id="tech-result" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configurar fechas por defecto
+        window.onload = function() {
+            const hoy = new Date();
+            const manana = new Date(hoy);
+            manana.setDate(hoy.getDate() + 1);
+            const semana = new Date(hoy);
+            semana.setDate(hoy.getDate() + 7);
+            
+            document.getElementById('alquiler-inicio').value = manana.toISOString().split('T')[0];
+            document.getElementById('alquiler-fin').value = semana.toISOString().split('T')[0];
+        };
+
+        async function testProductos() {
+            const resultDiv = document.getElementById('productos-result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Cargando productos...</div>';
+            
+            try {
+                const response = await fetch('/api/productos');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    let html = '<div class="alert alert-success"><h6>✅ Productos Disponibles:</h6>';
+                    if (result.productos.length > 0) {
+                        html += '<div class="row">';
+                        result.productos.forEach(producto => {
+                            html += `
+                                <div class="col-md-6 mb-2">
+                                    <div class="card card-body p-2">
+                                        <strong>ID ${producto.id}: ${producto.nombre}</strong><br>
+                                        <small>
+                                            Compra: $${producto.precio_compra} (Stock: ${producto.stock_compra})<br>
+                                            Alquiler: $${producto.precio_alquiler}/día (Stock: ${producto.stock_alquiler})
+                                        </small>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    } else {
+                        html += '<p>No hay productos disponibles</p>';
+                    }
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error de conexión: ${error.message}</div>`;
+            }
+        }
+
+        async function testCompra() {
+            const resultDiv = document.getElementById('compra-result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Procesando compra...</div>';
+            
+            const compraData = {
+                usuario_codigo: document.getElementById('compra-usuario').value,
+                producto_id: parseInt(document.getElementById('compra-producto').value),
+                cantidad: parseInt(document.getElementById('compra-cantidad').value),
+                metodo_pago: document.getElementById('compra-pago').value,
+                direccion_envio: document.getElementById('compra-direccion').value,
+                notas: 'Compra de prueba'
+            };
+            
+            try {
+                const response = await fetch('/api/compras', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(compraData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Compra Exitosa</h6>
+                            <p><strong>ID:</strong> ${result.compra_id}</p>
+                            <p><strong>Producto:</strong> ${result.producto}</p>
+                            <p><strong>Cantidad:</strong> ${result.cantidad}</p>
+                            <p><strong>Total:</strong> $${result.precio_total}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error de conexión: ${error.message}</div>`;
+            }
+        }
+
+        async function testAlquiler() {
+            const resultDiv = document.getElementById('alquiler-result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Procesando alquiler...</div>';
+            
+            const alquilerData = {
+                usuario_codigo: document.getElementById('alquiler-usuario').value,
+                producto_id: parseInt(document.getElementById('alquiler-producto').value),
+                cantidad: parseInt(document.getElementById('alquiler-cantidad').value),
+                fecha_inicio: document.getElementById('alquiler-inicio').value,
+                fecha_fin: document.getElementById('alquiler-fin').value,
+                metodo_pago: document.getElementById('alquiler-pago').value,
+                direccion_entrega: document.getElementById('alquiler-direccion').value,
+                deposito: 50000,
+                notas: 'Alquiler de prueba'
+            };
+            
+            try {
+                const response = await fetch('/api/alquileres', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(alquilerData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Alquiler Exitoso</h6>
+                            <p><strong>ID:</strong> ${result.alquiler_id}</p>
+                            <p><strong>Producto:</strong> ${result.producto}</p>
+                            <p><strong>Cantidad:</strong> ${result.cantidad}</p>
+                            <p><strong>Días:</strong> ${result.dias_alquiler}</p>
+                            <p><strong>Total:</strong> $${result.precio_total}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error de conexión: ${error.message}</div>`;
+            }
+        }
+
+        async function testComprasTech() {
+            const techCode = document.getElementById('tech-code').value;
+            const resultDiv = document.getElementById('tech-result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Cargando compras...</div>';
+            
+            try {
+                const response = await fetch('/api/compras-tech', {
+                    headers: { 'x-tech-code': techCode }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    let html = '<div class="alert alert-success"><h6>✅ Compras Registradas:</h6>';
+                    if (result.compras.length > 0) {
+                        html += '<div class="table-responsive"><table class="table table-sm">';
+                        html += '<thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Cantidad</th><th>Total</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>';
+                        result.compras.forEach(compra => {
+                            html += `
+                                <tr>
+                                    <td>${compra.id}</td>
+                                    <td>${compra.usuario_codigo}</td>
+                                    <td>${compra.producto_nombre}</td>
+                                    <td>${compra.cantidad}</td>
+                                    <td>$${compra.precio_total}</td>
+                                    <td><span class="badge bg-primary">${compra.estado}</span></td>
+                                    <td>${new Date(compra.fecha_compra).toLocaleDateString()}</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p>No hay compras registradas</p>';
+                    }
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error de conexión: ${error.message}</div>`;
+            }
+        }
+
+        async function testAlquileresTech() {
+            const techCode = document.getElementById('tech-code').value;
+            const resultDiv = document.getElementById('tech-result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Cargando alquileres...</div>';
+            
+            try {
+                const response = await fetch('/api/alquileres-tech', {
+                    headers: { 'x-tech-code': techCode }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    let html = '<div class="alert alert-success"><h6>✅ Alquileres Registrados:</h6>';
+                    if (result.alquileres.length > 0) {
+                        html += '<div class="table-responsive"><table class="table table-sm">';
+                        html += '<thead><tr><th>ID</th><th>Usuario</th><th>Producto</th><th>Días</th><th>Total</th><th>Estado</th><th>Inicio</th><th>Fin</th></tr></thead><tbody>';
+                        result.alquileres.forEach(alquiler => {
+                            html += `
+                                <tr>
+                                    <td>${alquiler.id}</td>
+                                    <td>${alquiler.usuario_codigo}</td>
+                                    <td>${alquiler.producto_nombre}</td>
+                                    <td>${alquiler.dias_alquiler}</td>
+                                    <td>$${alquiler.precio_total}</td>
+                                    <td><span class="badge bg-warning">${alquiler.estado}</span></td>
+                                    <td>${new Date(alquiler.fecha_inicio).toLocaleDateString()}</td>
+                                    <td>${new Date(alquiler.fecha_fin).toLocaleDateString()}</td>
+                                </tr>
+                            `;
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p>No hay alquileres registrados</p>';
+                    }
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error de conexión: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

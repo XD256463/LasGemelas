@@ -57,6 +57,7 @@
                     </div>
                     <div class="card-body">
                         <button class="btn btn-info btn-sm" onclick="testBD()">Test</button>
+                        <button class="btn btn-secondary btn-sm ms-1" onclick="crearProductos()">Crear Productos</button>
                         <div id="bd-result" class="mt-2"></div>
                     </div>
                 </div>
@@ -146,6 +147,26 @@
                 
                 if (response.ok) {
                     result.innerHTML = `<small class="text-success">✅ BD OK (${data.totalUsuarios} usuarios)</small>`;
+                } else {
+                    result.innerHTML = `<small class="text-danger">❌ ${data.error}</small>`;
+                }
+            } catch (error) {
+                result.innerHTML = '<small class="text-danger">❌ Error conexión</small>';
+            }
+        }
+
+        async function crearProductos() {
+            const result = document.getElementById('bd-result');
+            result.innerHTML = '<small class="text-info">Creando productos...</small>';
+            
+            try {
+                const response = await fetch('/api/debug/crear-productos', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<small class="text-success">✅ ${data.productos_creados} productos creados</small>`;
                 } else {
                     result.innerHTML = `<small class="text-danger">❌ ${data.error}</small>`;
                 }

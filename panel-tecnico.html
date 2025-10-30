@@ -158,9 +158,12 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>ID</th>
+                                <th>Código</th>
                                 <th>Nombre</th>
-                                <th>Email</th>
+                                <th>Apellido</th>
+                                <th>Correo</th>
                                 <th>Teléfono</th>
+                                <th>Rol</th>
                                 <th>Fecha Registro</th>
                                 <th>Acciones</th>
                             </tr>
@@ -200,11 +203,22 @@
                     <form id="userForm">
                         <input type="hidden" id="userId">
                         <div class="mb-3">
-                            <label for="userName" class="form-label">Nombre *</label>
-                            <input type="text" class="form-control" id="userName" required>
+                            <label for="userCode" class="form-label">Código *</label>
+                            <input type="text" class="form-control" id="userCode" required pattern="U[0-9]+" placeholder="U12345678">
+                            <div class="form-text">Debe comenzar con "U" seguido de números</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="userName" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="userName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="userLastName" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="userLastName" required>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="userEmail" class="form-label">Email *</label>
+                            <label for="userEmail" class="form-label">Correo *</label>
                             <input type="email" class="form-control" id="userEmail" required>
                         </div>
                         <div class="mb-3">
@@ -390,22 +404,25 @@
             const tbody = document.getElementById('usersTableBody');
             
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron usuarios</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">No se encontraron usuarios</td></tr>';
                 return;
             }
             
             tbody.innerHTML = users.map(user => `
                 <tr>
                     <td>${user.id}</td>
+                    <td><span class="badge bg-primary">${user.codigo}</span></td>
                     <td>${user.nombre}</td>
-                    <td>${user.email}</td>
+                    <td>${user.apellido}</td>
+                    <td>${user.correo}</td>
                     <td>${user.telefono || '-'}</td>
+                    <td><span class="badge ${user.rol === 'admin' ? 'bg-danger' : 'bg-success'}">${user.rol}</span></td>
                     <td>${new Date(user.fecha_registro).toLocaleDateString()}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser(${user.id})" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="showDeleteModal(${user.id}, '${user.nombre}', '${user.email}')" title="Eliminar">
+                        <button class="btn btn-sm btn-outline-danger" onclick="showDeleteModal(${user.id}, '${user.nombre} ${user.apellido}', '${user.correo}')" title="Eliminar">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -477,15 +494,22 @@
             
             const userId = document.getElementById('userId').value;
             const userData = {
+                codigo: document.getElementById('userCode').value.trim(),
                 nombre: document.getElementById('userName').value.trim(),
-                email: document.getElementById('userEmail').value.trim(),
-                password: document.getElementById('userPassword').value.trim(),
+                apellido: document.getElementById('userLastName').value.trim(),
+                correo: document.getElementById('userEmail').value.trim(),
+                contrasena: document.getElementById('userPassword').value.trim(),
                 telefono: document.getElementById('userPhone').value.trim(),
                 direccion: document.getElementById('userAddress').value.trim()
             };
             
-            if (!userData.password && !userId) {
+            if (!userData.contrasena && !userId) {
                 alert('La contraseña es requerida para nuevos usuarios');
+                return;
+            }
+            
+            if (!userData.codigo.startsWith('U')) {
+                alert('El código debe comenzar con "U"');
                 return;
             }
             

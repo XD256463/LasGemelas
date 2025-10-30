@@ -164,11 +164,30 @@
                         </h3>
                         
                         <div class="mb-4">
-                            <label for="registerName" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
-                                👤 Nombre Completo:
+                            <label for="registerCode" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                🆔 Código de Usuario:
                             </label>
-                            <input type="text" id="registerName" name="registerName" 
-                                   placeholder="Tu nombre completo" class="form-control" required>
+                            <input type="text" id="registerCode" name="registerCode" 
+                                   placeholder="Ej: U23201604" class="form-control" required 
+                                   pattern="U[0-9]+" title="El código debe comenzar con U seguido de números">
+                            <div class="form-text">El código debe comenzar con "U" seguido de números (ej: U23201604)</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="registerName" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                    👤 Nombre:
+                                </label>
+                                <input type="text" id="registerName" name="registerName" 
+                                       placeholder="Tu nombre" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="registerLastName" class="form-label" style="color: var(--color-oscuro); font-weight: 600;">
+                                    👤 Apellido:
+                                </label>
+                                <input type="text" id="registerLastName" name="registerLastName" 
+                                       placeholder="Tu apellido" class="form-control" required>
+                            </div>
                         </div>
 
                         <div class="mb-4">
@@ -235,11 +254,7 @@
         </div>
     </div>
     <!-- Scripts -->
-    <script src="api-client.js"></script>
-    <script src="password-toggle-fix.js"></script>
     <script src="codigoRegistro.js"></script>
-    <script src="toggle-guardian.js"></script>
-    <script src="efectos.js"></script>
 </body>
 
 </html>

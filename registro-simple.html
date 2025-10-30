@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Las Gemelas - Registro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --color-primario: #ff6b9d;
+            --color-secundario: #4ecdc4;
+            --color-oscuro: #2c3e50;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-secundario) 100%);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .registro-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 600px;
+            overflow: hidden;
+        }
+        
+        .registro-header {
+            background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-secundario) 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .registro-body {
+            padding: 40px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--color-primario);
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 157, 0.25);
+        }
+        
+        .btn-registro {
+            background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-secundario) 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-registro:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: white;
+        }
+        
+        .btn-registro:disabled {
+            opacity: 0.6;
+            transform: none;
+        }
+        
+        .requirement {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .requirement.valid {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .requirement.invalid {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .toggle-password {
+            cursor: pointer;
+            color: #6c757d;
+            transition: color 0.3s ease;
+        }
+        
+        .toggle-password:hover {
+            color: var(--color-primario);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="registro-container">
+            <!-- Header -->
+            <div class="registro-header">
+                <h1><i class="bi bi-person-plus-fill"></i> Registro de Usuario</h1>
+                <p class="mb-0">Únete a la familia Las Gemelas</p>
+            </div>
+            
+            <!-- Body -->
+            <div class="registro-body">
+                <form id="registerForm">
+                    <!-- Código -->
+                    <div class="mb-3">
+                        <label for="registerCode" class="form-label fw-bold">
+                            <i class="bi bi-qr-code"></i> Código de Usuario *
+                        </label>
+                        <input type="text" id="registerCode" class="form-control" 
+                               placeholder="Ej: U23201604" required 
+                               pattern="U[0-9]+" title="El código debe comenzar con U seguido de números">
+                        <div class="form-text">El código debe comenzar con "U" seguido de números</div>
+                    </div>
+
+                    <!-- Nombre y Apellido -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="registerName" class="form-label fw-bold">
+                                <i class="bi bi-person"></i> Nombre *
+                            </label>
+                            <input type="text" id="registerName" class="form-control" 
+                                   placeholder="Tu nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="registerLastName" class="form-label fw-bold">
+                                <i class="bi bi-person"></i> Apellido *
+                            </label>
+                            <input type="text" id="registerLastName" class="form-control" 
+                                   placeholder="Tu apellido" required>
+                        </div>
+                    </div>
+
+                    <!-- Correo -->
+                    <div class="mb-3">
+                        <label for="registerEmail" class="form-label fw-bold">
+                            <i class="bi bi-envelope"></i> Correo Electrónico *
+                        </label>
+                        <input type="email" id="registerEmail" class="form-control" 
+                               placeholder="tu@email.com" required>
+                    </div>
+
+                    <!-- Contraseña -->
+                    <div class="mb-3">
+                        <label for="registerPassword" class="form-label fw-bold">
+                            <i class="bi bi-lock"></i> Contraseña *
+                        </label>
+                        <div class="input-group">
+                            <input type="password" id="registerPassword" class="form-control" 
+                                   placeholder="Crea una contraseña segura" required>
+                            <button class="btn btn-outline-secondary toggle-password" type="button" 
+                                    onclick="togglePassword()">
+                                <i class="bi bi-eye" id="passwordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Requisitos de contraseña -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Requisitos de contraseña:</h6>
+                        <div id="reqLength" class="requirement invalid">❌ 8 o más caracteres</div>
+                        <div id="reqDigit" class="requirement invalid">❌ Mínimo un (1) dígito</div>
+                        <div id="reqUppercase" class="requirement invalid">❌ Mínimo una (1) mayúscula</div>
+                        <div id="reqSpecial" class="requirement invalid">❌ Mínimo un (1) carácter especial (? @ / ! # $ % & *)</div>
+                    </div>
+
+                    <!-- Teléfono (opcional) -->
+                    <div class="mb-3">
+                        <label for="registerPhone" class="form-label fw-bold">
+                            <i class="bi bi-phone"></i> Teléfono (Opcional)
+                        </label>
+                        <input type="tel" id="registerPhone" class="form-control" 
+                               placeholder="Ej: +57 300 123 4567">
+                    </div>
+
+                    <!-- Dirección (opcional) -->
+                    <div class="mb-4">
+                        <label for="registerAddress" class="form-label fw-bold">
+                            <i class="bi bi-geo-alt"></i> Dirección (Opcional)
+                        </label>
+                        <textarea id="registerAddress" class="form-control" rows="2" 
+                                  placeholder="Tu dirección completa"></textarea>
+                    </div>
+
+                    <!-- Mensaje -->
+                    <div id="registerMessage" class="mb-3 text-center fw-bold"></div>
+
+                    <!-- Botón -->
+                    <div class="text-center">
+                        <button type="submit" id="registerButton" class="btn btn-registro btn-lg" disabled>
+                            <i class="bi bi-check-circle"></i> Registrar Cuenta
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Enlaces -->
+                <div class="text-center mt-4">
+                    <a href="index.html" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver al Inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let isPasswordVisible = false;
+
+        // Toggle de contraseña
+        function togglePassword() {
+            const passwordInput = document.getElementById('registerPassword');
+            const passwordIcon = document.getElementById('passwordIcon');
+            
+            isPasswordVisible = !isPasswordVisible;
+            passwordInput.type = isPasswordVisible ? 'text' : 'password';
+            passwordIcon.className = isPasswordVisible ? 'bi bi-eye-slash' : 'bi bi-eye';
+        }
+
+        // Validaciones
+        function validateCode() {
+            const code = document.getElementById('registerCode').value.trim();
+            return code.startsWith('U') && code.length >= 2 && /^U[0-9]+$/.test(code);
+        }
+
+        function validateName() {
+            const name = document.getElementById('registerName').value.trim();
+            return name.length >= 2;
+        }
+
+        function validateLastName() {
+            const lastName = document.getElementById('registerLastName').value.trim();
+            return lastName.length >= 2;
+        }
+
+        function validateEmail() {
+            const email = document.getElementById('registerEmail').value.trim();
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailPattern.test(email);
+        }
+
+        function validatePassword() {
+            const password = document.getElementById('registerPassword').value;
+            let allValid = true;
+
+            // 8 o más caracteres
+            const lengthValid = password.length >= 8;
+            updateRequirement('reqLength', lengthValid, "8 o más caracteres");
+            if (!lengthValid) allValid = false;
+
+            // Mínimo un dígito
+            const digitValid = /[0-9]/.test(password);
+            updateRequirement('reqDigit', digitValid, "Mínimo un (1) dígito");
+            if (!digitValid) allValid = false;
+
+            // Mínimo una mayúscula
+            const uppercaseValid = /[A-Z]/.test(password);
+            updateRequirement('reqUppercase', uppercaseValid, "Mínimo una (1) mayúscula");
+            if (!uppercaseValid) allValid = false;
+
+            // Mínimo un carácter especial
+            const specialValid = /[?@/!#$%&*]/.test(password);
+            updateRequirement('reqSpecial', specialValid, "Mínimo un (1) carácter especial (? @ / ! # $ % & *)");
+            if (!specialValid) allValid = false;
+
+            return allValid;
+        }
+
+        function updateRequirement(elementId, isValid, text) {
+            const element = document.getElementById(elementId);
+            if (isValid) {
+                element.className = 'requirement valid';
+                element.innerHTML = `✅ ${text}`;
+            } else {
+                element.className = 'requirement invalid';
+                element.innerHTML = `❌ ${text}`;
+            }
+        }
+
+        function validateForm() {
+            const codeValid = validateCode();
+            const nameValid = validateName();
+            const lastNameValid = validateLastName();
+            const emailValid = validateEmail();
+            const passwordValid = validatePassword();
+
+            const submitButton = document.getElementById('registerButton');
+            const messageElement = document.getElementById('registerMessage');
+
+            if (codeValid && nameValid && lastNameValid && emailValid && passwordValid) {
+                submitButton.disabled = false;
+                messageElement.textContent = '✅ ¡Formulario válido! Puedes registrarte.';
+                messageElement.style.color = '#28a745';
+            } else {
+                submitButton.disabled = true;
+                messageElement.style.color = '#dc3545';
+
+                if (!codeValid && document.getElementById('registerCode').value.trim()) {
+                    messageElement.textContent = '❌ El código debe comenzar con "U" seguido de números.';
+                } else if (!nameValid && document.getElementById('registerName').value.trim()) {
+                    messageElement.textContent = '❌ El nombre debe tener al menos 2 caracteres.';
+                } else if (!lastNameValid && document.getElementById('registerLastName').value.trim()) {
+                    messageElement.textContent = '❌ El apellido debe tener al menos 2 caracteres.';
+                } else if (!emailValid && document.getElementById('registerEmail').value.trim()) {
+                    messageElement.textContent = '❌ Ingresa un correo electrónico válido.';
+                } else {
+                    messageElement.textContent = '';
+                }
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Validación en tiempo real
+            document.getElementById('registerCode').addEventListener('input', validateForm);
+            document.getElementById('registerName').addEventListener('input', validateForm);
+            document.getElementById('registerLastName').addEventListener('input', validateForm);
+            document.getElementById('registerEmail').addEventListener('input', validateForm);
+            document.getElementById('registerPassword').addEventListener('input', validateForm);
+
+            // Envío del formulario
+            document.getElementById('registerForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const submitButton = document.getElementById('registerButton');
+                const messageElement = document.getElementById('registerMessage');
+
+                // Validar formulario
+                if (!validateCode() || !validateName() || !validateLastName() || !validateEmail() || !validatePassword()) {
+                    messageElement.textContent = '❌ Por favor completa todos los campos correctamente.';
+                    messageElement.style.color = '#dc3545';
+                    return;
+                }
+
+                // Deshabilitar botón
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Registrando...';
+                messageElement.textContent = '📡 Conectando con el servidor...';
+                messageElement.style.color = '#007bff';
+
+                try {
+                    const userData = {
+                        codigo: document.getElementById('registerCode').value.trim(),
+                        nombre: document.getElementById('registerName').value.trim(),
+                        apellido: document.getElementById('registerLastName').value.trim(),
+                        correo: document.getElementById('registerEmail').value.trim(),
+                        contrasena: document.getElementById('registerPassword').value,
+                        telefono: document.getElementById('registerPhone').value.trim(),
+                        direccion: document.getElementById('registerAddress').value.trim()
+                    };
+
+                    const response = await fetch('/api/registro', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        messageElement.textContent = '🎉 ¡Registro exitoso! Redirigiendo...';
+                        messageElement.style.color = '#28a745';
+                        
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 2000);
+                    } else {
+                        messageElement.textContent = `❌ Error: ${result.error}`;
+                        messageElement.style.color = '#dc3545';
+                        
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = '<i class="bi bi-check-circle"></i> Registrar Cuenta';
+                    }
+                } catch (error) {
+                    messageElement.textContent = '❌ Error de conexión. Intenta nuevamente.';
+                    messageElement.style.color = '#dc3545';
+                    
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = '<i class="bi bi-check-circle"></i> Registrar Cuenta';
+                }
+            });
+
+            // Validación inicial
+            validateForm();
+        });
+    </script>
+</body>
+</html>

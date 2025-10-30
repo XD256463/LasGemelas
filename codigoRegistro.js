@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar que todos los elementos existan
+    const codeInput = document.getElementById('registerCode');
     const nameInput = document.getElementById('registerName');
+    const lastNameInput = document.getElementById('registerLastName');
     const emailInput = document.getElementById('registerEmail');
     const phoneInput = document.getElementById('registerPhone');
     const addressInput = document.getElementById('registerAddress');
@@ -33,10 +35,22 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleIconText: toggleIcon ? toggleIcon.textContent : 'N/A'
     });
 
+    // Validar código
+    const validateCode = () => {
+        const code = codeInput.value.trim();
+        return code.startsWith('U') && code.length >= 2 && /^U[0-9]+$/.test(code);
+    };
+
     // Validar nombre
     const validateName = () => {
         const name = nameInput.value.trim();
         return name.length >= 2;
+    };
+
+    // Validar apellido
+    const validateLastName = () => {
+        const lastName = lastNameInput.value.trim();
+        return lastName.length >= 2;
     };
 
     // Validar email
@@ -78,11 +92,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const validateForm = () => {
+        const codeValid = validateCode();
         const nameValid = validateName();
+        const lastNameValid = validateLastName();
         const emailValid = validateEmail();
         const passwordValid = validatePassword();
 
-        if (nameValid && emailValid && passwordValid) {
+        if (codeValid && nameValid && lastNameValid && emailValid && passwordValid) {
             submitButton.disabled = false;
             submitButton.style.opacity = '1';
             messageElement.textContent = '✅ ¡Formulario válido! Puedes registrarte.';
@@ -91,8 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
             submitButton.disabled = true;
             submitButton.style.opacity = '0.6';
 
-            if (!nameValid && nameInput.value.trim()) {
+            if (!codeValid && codeInput.value.trim()) {
+                messageElement.textContent = '❌ El código debe comenzar con "U" seguido de números (ej: U23201604).';
+                messageElement.style.color = '#e74c3c';
+            } else if (!nameValid && nameInput.value.trim()) {
                 messageElement.textContent = '❌ El nombre debe tener al menos 2 caracteres.';
+                messageElement.style.color = '#e74c3c';
+            } else if (!lastNameValid && lastNameInput.value.trim()) {
+                messageElement.textContent = '❌ El apellido debe tener al menos 2 caracteres.';
                 messageElement.style.color = '#e74c3c';
             } else if (!emailValid && emailInput.value.trim()) {
                 messageElement.textContent = '❌ Ingresa un correo electrónico válido.';
@@ -267,7 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Event listeners para validación en tiempo real
+    codeInput.addEventListener('input', validateForm);
     nameInput.addEventListener('input', validateForm);
+    lastNameInput.addEventListener('input', validateForm);
     emailInput.addEventListener('input', validateForm);
 
     // Event listener específico para contraseña con múltiples eventos
@@ -300,14 +324,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        const code = codeInput.value.trim();
         const name = nameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
         const email = emailInput.value.trim();
         const phone = phoneInput.value.trim();
         const address = addressInput.value.trim();
         const password = passwordInput.value;
 
+        if (!validateCode()) {
+            messageElement.textContent = '❌ El código debe comenzar con "U" seguido de números.';
+            messageElement.style.color = '#e74c3c';
+            return;
+        }
+
         if (!validateName()) {
             messageElement.textContent = '❌ El nombre debe tener al menos 2 caracteres.';
+            messageElement.style.color = '#e74c3c';
+            return;
+        }
+
+        if (!validateLastName()) {
+            messageElement.textContent = '❌ El apellido debe tener al menos 2 caracteres.';
             messageElement.style.color = '#e74c3c';
             return;
         }
@@ -333,9 +371,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Crear objeto de datos del usuario
             const userData = {
+                codigo: code,
                 nombre: name,
-                email: email,
-                password: password,
+                apellido: lastName,
+                correo: email,
+                contrasena: password,
                 telefono: phone,
                 direccion: address
             };

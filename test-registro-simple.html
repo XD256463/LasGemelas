@@ -18,16 +18,25 @@
                     <div class="card-body">
                         <form id="testForm">
                             <div class="mb-3">
+                                <label for="codigo" class="form-label">Código:</label>
+                                <input type="text" class="form-control" id="codigo" value="U12345678" required>
+                                <small class="text-muted">Debe comenzar con "U"</small>
+                            </div>
+                            <div class="mb-3">
                                 <label for="nombre" class="form-label">Nombre:</label>
-                                <input type="text" class="form-control" id="nombre" value="Usuario Test" required>
+                                <input type="text" class="form-control" id="nombre" value="Usuario" required>
                             </div>
                             <div class="mb-3">
-                                <label for="email" class="form-label">Email:</label>
-                                <input type="email" class="form-control" id="email" value="test@ejemplo.com" required>
+                                <label for="apellido" class="form-label">Apellido:</label>
+                                <input type="text" class="form-control" id="apellido" value="Test" required>
                             </div>
                             <div class="mb-3">
-                                <label for="password" class="form-label">Contraseña:</label>
-                                <input type="password" class="form-control" id="password" value="Test123@" required>
+                                <label for="correo" class="form-label">Correo:</label>
+                                <input type="email" class="form-control" id="correo" value="test@ejemplo.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contrasena" class="form-label">Contraseña:</label>
+                                <input type="password" class="form-control" id="contrasena" value="Test123@" required>
                             </div>
                             <div class="mb-3">
                                 <label for="telefono" class="form-label">Teléfono:</label>
@@ -57,9 +66,11 @@
             resultDiv.innerHTML = '<div class="alert alert-info">Probando registro...</div>';
             
             const userData = {
+                codigo: document.getElementById('codigo').value,
                 nombre: document.getElementById('nombre').value,
-                email: document.getElementById('email').value,
-                password: document.getElementById('password').value,
+                apellido: document.getElementById('apellido').value,
+                correo: document.getElementById('correo').value,
+                contrasena: document.getElementById('contrasena').value,
                 telefono: document.getElementById('telefono').value,
                 direccion: document.getElementById('direccion').value
             };
@@ -141,14 +152,15 @@
             }
         }
         
-        // Generar email único para evitar duplicados
-        function generateUniqueEmail() {
+        // Generar datos únicos para evitar duplicados
+        function generateUniqueData() {
             const timestamp = Date.now();
-            document.getElementById('email').value = `test${timestamp}@ejemplo.com`;
+            document.getElementById('codigo').value = `U${timestamp}`;
+            document.getElementById('correo').value = `test${timestamp}@ejemplo.com`;
         }
         
-        // Generar email único al cargar
-        window.onload = generateUniqueEmail;
+        // Generar datos únicos al cargar
+        window.onload = generateUniqueData;
     </script>
 </body>
 </html>

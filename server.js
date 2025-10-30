@@ -49,11 +49,14 @@ async function initializeDatabase() {
         await connection.execute(`
       CREATE TABLE IF NOT EXISTS usuarios (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(10) NOT NULL UNIQUE,
         nombre VARCHAR(100) NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        telefono VARCHAR(20),
-        direccion TEXT,
+        apellido VARCHAR(100) NOT NULL,
+        correo VARCHAR(150) NOT NULL UNIQUE,
+        contrasena VARCHAR(255) NOT NULL,
+        telefono VARCHAR(30),
+        direccion VARCHAR(255),
+        rol ENUM('cliente', 'admin') DEFAULT 'cliente',
         fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -128,55 +131,74 @@ app.post('/api/registro', async (req, res) => {
     try {
         console.log('Datos recibidos para registro:', req.body);
         
-        const { nombre, email, password, telefono, direccion } = req.body;
+        const { codigo, nombre, apellido, correo, contrasena, telefono, direccion } = req.body;
 
         // Validar datos requeridos
-        if (!nombre || !email || !password) {
-            console.log('Datos faltantes:', { nombre: !!nombre, email: !!email, password: !!password });
+        if (!codigo || !nombre || !apellido || !correo || !contrasena) {
+            console.log('Datos faltantes:', { codigo: !!codigo, nombre: !!nombre, apellido: !!apellido, correo: !!correo, contrasena: !!contrasena });
             return res.status(400).json({ 
-                error: 'Nombre, email y contraseña son requeridos' 
+                error: 'Código, nombre, apellido, correo y contraseña son requeridos' 
             });
         }
 
-        // Validar formato de email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+        // Validar que el código comience con "U"
+        if (!codigo.startsWith('U') || codigo.length < 2) {
             return res.status(400).json({ 
-                error: 'Formato de email inválido' 
+                error: 'El código debe comenzar con "U" y tener al menos 2 caracteres' 
+            });
+        }
+
+        // Validar formato de correo
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(correo)) {
+            return res.status(400).json({ 
+                error: 'Formato de correo electrónico inválido' 
             });
         }
 
         console.log('Verificando si el usuario existe...');
         
-        // Verificar si el usuario ya existe
-        const [existingUser] = await pool.execute(
-            'SELECT id FROM usuarios WHERE email = ?',
-            [email]
+        // Verificar si el código ya existe
+        const [existingCode] = await pool.execute(
+            'SELECT id FROM usuarios WHERE codigo = ?',
+            [codigo]
         );
 
-        if (existingUser.length > 0) {
-            console.log('Usuario ya existe:', email);
-            return res.status(400).json({ error: 'El usuario ya existe' });
+        if (existingCode.length > 0) {
+            console.log('Código ya existe:', codigo);
+            return res.status(400).json({ error: 'El código de usuario ya está registrado' });
+        }
+
+        // Verificar si el correo ya existe
+        const [existingEmail] = await pool.execute(
+            'SELECT id FROM usuarios WHERE correo = ?',
+            [correo]
+        );
+
+        if (existingEmail.length > 0) {
+            console.log('Correo ya existe:', correo);
+            return res.status(400).json({ error: 'El correo electrónico ya está registrado' });
         }
 
         console.log('Encriptando contraseña...');
         
         // Encriptar contraseña
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(contrasena, 10);
 
         console.log('Insertando usuario en la base de datos...');
         
         // Insertar usuario
         const [result] = await pool.execute(
-            'INSERT INTO usuarios (nombre, email, password, telefono, direccion) VALUES (?, ?, ?, ?, ?)',
-            [nombre, email, hashedPassword, telefono || null, direccion || null]
+            'INSERT INTO usuarios (codigo, nombre, apellido, correo, contrasena, telefono, direccion, rol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [codigo, nombre, apellido, correo, hashedPassword, telefono || null, direccion || null, 'cliente']
         );
 
         console.log('Usuario registrado exitosamente:', result.insertId);
 
         res.status(201).json({
             message: 'Usuario registrado exitosamente',
-            userId: result.insertId
+            userId: result.insertId,
+            codigo: codigo
         });
     } catch (error) {
         console.error('Error detallado en registro:', {
@@ -190,7 +212,7 @@ app.post('/api/registro', async (req, res) => {
         
         // Enviar error más específico según el tipo
         if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ error: 'El email ya está registrado' });
+            return res.status(400).json({ error: 'El código o correo ya está registrado' });
         } else if (error.code === 'ECONNREFUSED') {
             return res.status(500).json({ error: 'No se puede conectar a la base de datos' });
         } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
@@ -210,49 +232,73 @@ app.post('/api/registro-simple', async (req, res) => {
         console.log('=== REGISTRO SIMPLE - INICIO ===');
         console.log('Body recibido:', JSON.stringify(req.body, null, 2));
         
-        const { nombre, email, password } = req.body;
+        const { codigo, nombre, apellido, correo, contrasena } = req.body;
         
         // Validaciones básicas
+        if (!codigo) {
+            return res.status(400).json({ error: 'Código es requerido' });
+        }
         if (!nombre) {
             return res.status(400).json({ error: 'Nombre es requerido' });
         }
-        if (!email) {
-            return res.status(400).json({ error: 'Email es requerido' });
+        if (!apellido) {
+            return res.status(400).json({ error: 'Apellido es requerido' });
         }
-        if (!password) {
-            return res.status(400).json({ error: 'Password es requerido' });
+        if (!correo) {
+            return res.status(400).json({ error: 'Correo es requerido' });
+        }
+        if (!contrasena) {
+            return res.status(400).json({ error: 'Contraseña es requerida' });
         }
         
-        console.log('Datos validados:', { nombre, email, passwordLength: password.length });
+        // Validar que el código comience con "U"
+        if (!codigo.startsWith('U')) {
+            return res.status(400).json({ error: 'El código debe comenzar con "U"' });
+        }
+        
+        console.log('Datos validados:', { codigo, nombre, apellido, correo, contrasenaLength: contrasena.length });
         
         // Probar conexión
         console.log('Obteniendo conexión...');
         const connection = await pool.getConnection();
         console.log('Conexión obtenida exitosamente');
         
-        // Verificar si usuario existe
-        console.log('Verificando si usuario existe...');
-        const [existing] = await connection.execute(
-            'SELECT id FROM usuarios WHERE email = ?',
-            [email]
+        // Verificar si código existe
+        console.log('Verificando si código existe...');
+        const [existingCode] = await connection.execute(
+            'SELECT id FROM usuarios WHERE codigo = ?',
+            [codigo]
         );
-        console.log('Usuarios existentes con este email:', existing.length);
+        console.log('Usuarios existentes con este código:', existingCode.length);
         
-        if (existing.length > 0) {
+        if (existingCode.length > 0) {
             connection.release();
-            return res.status(400).json({ error: 'Usuario ya existe' });
+            return res.status(400).json({ error: 'Código ya existe' });
+        }
+        
+        // Verificar si correo existe
+        console.log('Verificando si correo existe...');
+        const [existingEmail] = await connection.execute(
+            'SELECT id FROM usuarios WHERE correo = ?',
+            [correo]
+        );
+        console.log('Usuarios existentes con este correo:', existingEmail.length);
+        
+        if (existingEmail.length > 0) {
+            connection.release();
+            return res.status(400).json({ error: 'Correo ya existe' });
         }
         
         // Encriptar password
-        console.log('Encriptando password...');
-        const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('Password encriptado exitosamente');
+        console.log('Encriptando contraseña...');
+        const hashedPassword = await bcrypt.hash(contrasena, 10);
+        console.log('Contraseña encriptada exitosamente');
         
-        // Insertar usuario con valores mínimos
+        // Insertar usuario
         console.log('Insertando usuario...');
         const [result] = await connection.execute(
-            'INSERT INTO usuarios (nombre, email, password) VALUES (?, ?, ?)',
-            [nombre, email, hashedPassword]
+            'INSERT INTO usuarios (codigo, nombre, apellido, correo, contrasena, rol) VALUES (?, ?, ?, ?, ?, ?)',
+            [codigo, nombre, apellido, correo, hashedPassword, 'cliente']
         );
         console.log('Usuario insertado con ID:', result.insertId);
         
@@ -261,7 +307,8 @@ app.post('/api/registro-simple', async (req, res) => {
         
         res.status(201).json({
             message: 'Usuario registrado exitosamente',
-            userId: result.insertId
+            userId: result.insertId,
+            codigo: codigo
         });
         
     } catch (error) {
@@ -518,7 +565,7 @@ app.get('/api/usuarios-tech', async (req, res) => {
         
         // Obtener todos los usuarios (sin contraseñas)
         const [usuarios] = await connection.execute(`
-            SELECT id, nombre, email, telefono, direccion, fecha_registro 
+            SELECT id, codigo, nombre, apellido, correo, telefono, direccion, rol, fecha_registro 
             FROM usuarios 
             ORDER BY fecha_registro DESC 
             LIMIT 50
@@ -566,28 +613,40 @@ app.post('/api/usuarios-tech', async (req, res) => {
             return res.status(401).json({ error: 'Código de técnico requerido o inválido' });
         }
         
-        const { nombre, email, password, telefono, direccion } = req.body;
+        const { codigo, nombre, apellido, correo, contrasena, telefono, direccion } = req.body;
         
-        if (!nombre || !email || !password) {
-            return res.status(400).json({ error: 'Nombre, email y contraseña son requeridos' });
+        if (!codigo || !nombre || !apellido || !correo || !contrasena) {
+            return res.status(400).json({ error: 'Código, nombre, apellido, correo y contraseña son requeridos' });
+        }
+        
+        // Validar que el código comience con "U"
+        if (!codigo.startsWith('U')) {
+            return res.status(400).json({ error: 'El código debe comenzar con "U"' });
         }
         
         const connection = await pool.getConnection();
         
-        // Verificar si el email ya existe
-        const [existing] = await connection.execute('SELECT id FROM usuarios WHERE email = ?', [email]);
-        if (existing.length > 0) {
+        // Verificar si el código ya existe
+        const [existingCode] = await connection.execute('SELECT id FROM usuarios WHERE codigo = ?', [codigo]);
+        if (existingCode.length > 0) {
             connection.release();
-            return res.status(400).json({ error: 'El email ya está registrado' });
+            return res.status(400).json({ error: 'El código ya está registrado' });
+        }
+        
+        // Verificar si el correo ya existe
+        const [existingEmail] = await connection.execute('SELECT id FROM usuarios WHERE correo = ?', [correo]);
+        if (existingEmail.length > 0) {
+            connection.release();
+            return res.status(400).json({ error: 'El correo ya está registrado' });
         }
         
         // Encriptar contraseña
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(contrasena, 10);
         
         // Insertar usuario
         const [result] = await connection.execute(
-            'INSERT INTO usuarios (nombre, email, password, telefono, direccion) VALUES (?, ?, ?, ?, ?)',
-            [nombre, email, hashedPassword, telefono || null, direccion || null]
+            'INSERT INTO usuarios (codigo, nombre, apellido, correo, contrasena, telefono, direccion, rol) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [codigo, nombre, apellido, correo, hashedPassword, telefono || null, direccion || null, 'cliente']
         );
         
         connection.release();
@@ -595,7 +654,8 @@ app.post('/api/usuarios-tech', async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Usuario creado exitosamente',
-            userId: result.insertId
+            userId: result.insertId,
+            codigo: codigo
         });
     } catch (error) {
         console.error('Error creando usuario:', error);

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login BD - Las Gemelas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .user-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+        .user-card.found { border-color: #28a745; background-color: #d4edda; }
+        .user-card.not-found { border-color: #dc3545; background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Login Base de Datos - Las Gemelas</h1>
+        <p>Diagnóstico específico para el problema de login con cuentas de BD</p>
+    </div>
+
+    <!-- Estado de la BD -->
+    <div class="container">
+        <h2>1. 🗄️ Estado de la Base de Datos</h2>
+        <button onclick="verificarBD()">🔍 Verificar BD</button>
+        <button onclick="listarUsuariosBD()">👥 Listar Usuarios</button>
+        <div id="bd-status" class="test-section info">
+            <strong>Estado:</strong> Sin verificar
+        </div>
+    </div>
+
+    <!-- Usuarios Esperados vs Encontrados -->
+    <div class="container">
+        <h2>2. 👤 Verificación de Usuarios Específicos</h2>
+        <div class="grid">
+            <div>
+                <h4>Usuarios Esperados:</h4>
+                <div class="user-card">
+                    <strong>U23201604</strong><br>
+                    Contraseña: Usuario123@<br>
+                    <button onclick="verificarUsuario('U23201604')">🔍 Verificar</button>
+                    <button onclick="testLogin('U23201604', 'Usuario123@')">🔐 Test Login</button>
+                </div>
+                <div class="user-card">
+                    <strong>U23256703</strong><br>
+                    Contraseña: Miodemi456#<br>
+                    <button onclick="verificarUsuario('U23256703')">🔍 Verificar</button>
+                    <button onclick="testLogin('U23256703', 'Miodemi456#')">🔐 Test Login</button>
+                </div>
+            </div>
+            <div>
+                <h4>Estado de Verificación:</h4>
+                <div id="usuarios-status">
+                    <p class="text-muted">Haz clic en "Verificar" para cada usuario</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test de Login Manual -->
+    <div class="container">
+        <h2>3. 🔐 Test de Login Manual</h2>
+        <div class="grid">
+            <div>
+                <input type="text" id="test-usuario" placeholder="Código de usuario" value="U23201604">
+                <input type="password" id="test-password" placeholder="Contraseña" value="Usuario123@">
+                <button onclick="testLoginManual()">🔐 Test Login</button>
+                <button onclick="testLoginDetallado()">🔍 Login Detallado</button>
+            </div>
+            <div>
+                <h4>Resultado del Test:</h4>
+                <div id="login-result" class="test-section info">
+                    <strong>Estado:</strong> Sin probar
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diagnóstico de Contraseñas -->
+    <div class="container">
+        <h2>4. 🔑 Diagnóstico de Contraseñas</h2>
+        <button onclick="verificarHashContraseñas()">🔍 Verificar Hash</button>
+        <button onclick="crearUsuarioPrueba()">➕ Crear Usuario Prueba</button>
+        <div id="password-status" class="test-section info">
+            <strong>Estado:</strong> Sin verificar
+        </div>
+    </div>
+
+    <!-- Log Detallado -->
+    <div class="container">
+        <h2>📋 Log Detallado</h2>
+        <button onclick="limpiarLog()">🧹 Limpiar</button>
+        <button onclick="exportarLog()">📤 Exportar</button>
+        <div id="debug-log" class="log">Esperando diagnóstico...</div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let usuariosEncontrados = [];
+        
+        function log(mensaje, tipo = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('debug-log');
+            const tipoIcon = tipo === 'error' ? '❌' : tipo === 'success' ? '✅' : tipo === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${tipoIcon} ${mensaje}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function limpiarLog() {
+            document.getElementById('debug-log').textContent = 'Log limpiado...\n';
+        }
+
+        function exportarLog() {
+            const logContent = document.getElementById('debug-log').textContent;
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `debug-login-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function mostrarResultado(elementId, exito, mensaje, datos = null) {
+            const element = document.getElementById(elementId);
+            element.className = `test-section ${exito ? 'success' : 'error'}`;
+            element.innerHTML = `<strong>Estado:</strong> ${exito ? '✅ Éxito' : '❌ Error'}<br>
+                                <strong>Mensaje:</strong> ${mensaje}`;
+            
+            if (datos) {
+                element.innerHTML += `<br><strong>Datos:</strong> <pre>${JSON.stringify(datos, null, 2)}</pre>`;
+            }
+        }
+
+        // ===== VERIFICACIÓN DE BD =====
+        
+        async function verificarBD() {
+            log('🔍 Verificando estado de la base de datos...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/test-db`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('bd-status', true, 'BD conectada correctamente', data);
+                    log(`✅ BD conectada: ${data.database} en ${data.host}`);
+                    log(`✅ Tabla usuarios: ${data.tablaUsuarios}`);
+                    log(`✅ Total usuarios: ${data.totalUsuarios}`);
+                    
+                    // Automáticamente listar usuarios si la BD está OK
+                    setTimeout(listarUsuariosBD, 500);
+                } else {
+                    mostrarResultado('bd-status', false, `Error BD: ${data.error}`, data);
+                    log(`❌ Error BD: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('bd-status', false, `Error de conexión: ${error.message}`);
+                log(`❌ Error conexión BD: ${error.message}`);
+            }
+        }
+
+        async function listarUsuariosBD() {
+            log('👥 Listando usuarios de la base de datos...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    usuariosEncontrados = data.usuarios;
+                    log(`✅ ${usuariosEncontrados.length} usuarios encontrados en BD`);
+                    
+                    usuariosEncontrados.forEach(user => {
+                        log(`👤 ${user.codigo} - ${user.nombre} ${user.apellido} (${user.correo}) - Rol: ${user.rol}`);
+                    });
+                    
+                    mostrarResultado('bd-status', true, `${usuariosEncontrados.length} usuarios listados`, data.stats);
+                } else {
+                    mostrarResultado('bd-status', false, `Error: ${data.error}`, data);
+                    log(`❌ Error listando usuarios: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('bd-status', false, `Error: ${error.message}`);
+                log(`❌ Error listando usuarios: ${error.message}`);
+            }
+        }
+
+        // ===== VERIFICACIÓN DE USUARIOS ESPECÍFICOS =====
+        
+        async function verificarUsuario(codigo) {
+            log(`🔍 Verificando usuario específico: ${codigo}`);
+            
+            const usuario = usuariosEncontrados.find(u => u.codigo === codigo);
+            const statusDiv = document.getElementById('usuarios-status');
+            
+            if (usuario) {
+                log(`✅ Usuario ${codigo} encontrado en BD`);
+                log(`   Nombre: ${usuario.nombre} ${usuario.apellido}`);
+                log(`   Correo: ${usuario.correo}`);
+                log(`   Rol: ${usuario.rol}`);
+                log(`   Fecha registro: ${usuario.fecha_registro}`);
+                
+                statusDiv.innerHTML += `
+                    <div class="user-card found">
+                        <strong>✅ ${codigo} ENCONTRADO</strong><br>
+                        Nombre: ${usuario.nombre} ${usuario.apellido}<br>
+                        Correo: ${usuario.correo}<br>
+                        Rol: ${usuario.rol}
+                    </div>
+                `;
+            } else {
+                log(`❌ Usuario ${codigo} NO encontrado en BD`);
+                
+                statusDiv.innerHTML += `
+                    <div class="user-card not-found">
+                        <strong>❌ ${codigo} NO ENCONTRADO</strong><br>
+                        Este usuario no existe en la base de datos
+                    </div>
+                `;
+            }
+        }
+
+        // ===== TESTS DE LOGIN =====
+        
+        async function testLogin(codigo, password) {
+            log(`🔐 Probando login: ${codigo}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: codigo,
+                        contrasena: password
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Login exitoso para ${codigo}`);
+                    log(`   Usuario: ${data.usuario.nombre} ${data.usuario.apellido}`);
+                    log(`   Token generado: ${data.token ? 'Sí' : 'No'}`);
+                    mostrarResultado('login-result', true, `Login exitoso para ${codigo}`, data);
+                } else {
+                    log(`❌ Login fallido para ${codigo}: ${data.error}`);
+                    log(`   HTTP Status: ${response.status}`);
+                    log(`   Detalles: ${data.details || 'No disponibles'}`);
+                    mostrarResultado('login-result', false, `Login fallido: ${data.error}`, data);
+                }
+            } catch (error) {
+                log(`❌ Error de conexión en login ${codigo}: ${error.message}`);
+                mostrarResultado('login-result', false, `Error de conexión: ${error.message}`);
+            }
+        }
+
+        async function testLoginManual() {
+            const usuario = document.getElementById('test-usuario').value;
+            const password = document.getElementById('test-password').value;
+            
+            if (!usuario || !password) {
+                log('❌ Faltan datos para el test manual');
+                return;
+            }
+            
+            await testLogin(usuario, password);
+        }
+
+        async function testLoginDetallado() {
+            const usuario = document.getElementById('test-usuario').value;
+            const password = document.getElementById('test-password').value;
+            
+            log(`🔍 Test de login DETALLADO para: ${usuario}`);
+            
+            // Primero verificar si el usuario existe
+            const usuarioEnBD = usuariosEncontrados.find(u => u.codigo === usuario);
+            
+            if (!usuarioEnBD) {
+                log(`❌ PROBLEMA: Usuario ${usuario} no existe en BD`);
+                mostrarResultado('login-result', false, `Usuario ${usuario} no existe en BD`);
+                return;
+            }
+            
+            log(`✅ Usuario ${usuario} existe en BD`);
+            log(`   Datos BD: ${usuarioEnBD.nombre} ${usuarioEnBD.apellido}`);
+            
+            // Ahora probar el login
+            try {
+                log(`🔐 Enviando request de login...`);
+                log(`   URL: ${API_BASE}/api/login`);
+                log(`   Datos: { usuario: "${usuario}", contrasena: "[OCULTA]" }`);
+                
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: usuario,
+                        contrasena: password
+                    })
+                });
+
+                log(`📡 Response recibida: HTTP ${response.status}`);
+                
+                const data = await response.json();
+                log(`📄 Response data: ${JSON.stringify(data, null, 2)}`);
+                
+                if (response.ok) {
+                    log(`✅ LOGIN EXITOSO`);
+                    mostrarResultado('login-result', true, 'Login exitoso detallado', data);
+                } else {
+                    log(`❌ LOGIN FALLIDO`);
+                    log(`   Error: ${data.error}`);
+                    log(`   Code: ${data.code || 'No especificado'}`);
+                    log(`   Details: ${data.details || 'No disponibles'}`);
+                    mostrarResultado('login-result', false, `Login fallido detallado: ${data.error}`, data);
+                }
+            } catch (error) {
+                log(`❌ ERROR DE CONEXIÓN: ${error.message}`);
+                mostrarResultado('login-result', false, `Error de conexión: ${error.message}`);
+            }
+        }
+
+        // ===== DIAGNÓSTICO DE CONTRASEÑAS =====
+        
+        async function verificarHashContraseñas() {
+            log('🔑 Verificando hash de contraseñas...');
+            
+            if (usuariosEncontrados.length === 0) {
+                log('❌ No hay usuarios cargados. Ejecuta "Listar Usuarios" primero');
+                return;
+            }
+            
+            const usuariosTest = ['U23201604', 'U23256703'];
+            
+            usuariosTest.forEach(codigo => {
+                const usuario = usuariosEncontrados.find(u => u.codigo === codigo);
+                if (usuario) {
+                    log(`🔍 Usuario ${codigo}:`);
+                    log(`   Existe en BD: ✅`);
+                    log(`   Tiene contraseña hash: ${usuario.contrasena ? '✅' : '❌'}`);
+                    if (usuario.contrasena) {
+                        log(`   Hash length: ${usuario.contrasena.length}`);
+                        log(`   Hash starts with: ${usuario.contrasena.substring(0, 10)}...`);
+                    }
+                } else {
+                    log(`❌ Usuario ${codigo} no encontrado en BD`);
+                }
+            });
+            
+            mostrarResultado('password-status', true, 'Verificación de hash completada');
+        }
+
+        async function crearUsuarioPrueba() {
+            log('➕ Creando usuario de prueba...');
+            
+            const usuarioPrueba = {
+                codigo: 'U99999999',
+                nombre: 'Test',
+                apellido: 'Usuario',
+                correo: 'test@test.com',
+                contrasena: 'Test123@',
+                telefono: '123456789'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-tech-code': 'TECH_001'
+                    },
+                    body: JSON.stringify(usuarioPrueba)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Usuario de prueba creado: ${usuarioPrueba.codigo}`);
+                    mostrarResultado('password-status', true, 'Usuario de prueba creado', data);
+                    
+                    // Probar login inmediatamente
+                    setTimeout(() => {
+                        testLogin(usuarioPrueba.codigo, usuarioPrueba.contrasena);
+                    }, 1000);
+                } else {
+                    log(`❌ Error creando usuario de prueba: ${data.error}`);
+                    mostrarResultado('password-status', false, `Error: ${data.error}`, data);
+                }
+            } catch (error) {
+                log(`❌ Error creando usuario de prueba: ${error.message}`);
+                mostrarResultado('password-status', false, `Error: ${error.message}`);
+            }
+        }
+
+        // Auto-ejecutar al cargar
+        window.onload = function() {
+            log('🚀 Debug Login BD iniciado');
+            setTimeout(verificarBD, 500);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Registro → Login - Las Gemelas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .step {
+            border-left: 4px solid #007bff;
+            padding-left: 15px;
+            margin: 10px 0;
+        }
+        .step.completed { border-color: #28a745; }
+        .step.failed { border-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Test Registro → Login - Las Gemelas</h1>
+        <p>Prueba completa del flujo: Registro de usuario nuevo → Login con esas credenciales</p>
+    </div>
+
+    <!-- Datos del Usuario de Prueba -->
+    <div class="container">
+        <h2>👤 Usuario de Prueba</h2>
+        <div class="grid">
+            <div>
+                <input type="text" id="test-codigo" placeholder="Código" value="U88888888">
+                <input type="text" id="test-nombre" placeholder="Nombre" value="Test">
+                <input type="text" id="test-apellido" placeholder="Apellido" value="Registro">
+                <input type="email" id="test-correo" placeholder="Correo" value="testregistro@test.com">
+            </div>
+            <div>
+                <input type="password" id="test-contrasena" placeholder="Contraseña" value="TestReg123@">
+                <input type="text" id="test-telefono" placeholder="Teléfono" value="987654321">
+                <input type="text" id="test-direccion" placeholder="Dirección" value="Calle Test 123">
+                <button onclick="generarDatosAleatorios()">🎲 Generar Aleatorios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proceso Paso a Paso -->
+    <div class="container">
+        <h2>🔄 Proceso Completo</h2>
+        <button onclick="ejecutarProcesoCompleto()">🚀 Ejecutar Proceso Completo</button>
+        <button onclick="limpiarProceso()">🧹 Limpiar</button>
+        
+        <div id="proceso-steps">
+            <div class="step" id="step-1">
+                <strong>Paso 1:</strong> Verificar que el usuario no existe
+                <div id="step-1-result">Pendiente</div>
+            </div>
+            <div class="step" id="step-2">
+                <strong>Paso 2:</strong> Registrar nuevo usuario
+                <div id="step-2-result">Pendiente</div>
+            </div>
+            <div class="step" id="step-3">
+                <strong>Paso 3:</strong> Verificar que el usuario fue creado en BD
+                <div id="step-3-result">Pendiente</div>
+            </div>
+            <div class="step" id="step-4">
+                <strong>Paso 4:</strong> Intentar login con código
+                <div id="step-4-result">Pendiente</div>
+            </div>
+            <div class="step" id="step-5">
+                <strong>Paso 5:</strong> Intentar login con correo
+                <div id="step-5-result">Pendiente</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tests Individuales -->
+    <div class="container">
+        <h2>🔧 Tests Individuales</h2>
+        <div class="grid">
+            <div>
+                <h4>Registro:</h4>
+                <button onclick="testSoloRegistro()">📝 Solo Registro</button>
+                <button onclick="verificarUsuarioExiste()">🔍 Verificar Existe</button>
+            </div>
+            <div>
+                <h4>Login:</h4>
+                <button onclick="testSoloLogin()">🔐 Solo Login</button>
+                <button onclick="testLoginCorreo()">📧 Login con Correo</button>
+            </div>
+        </div>
+        <div id="test-individual-result" class="test-section info">
+            <strong>Resultado:</strong> Sin ejecutar
+        </div>
+    </div>
+
+    <!-- Log Detallado -->
+    <div class="container">
+        <h2>📋 Log Detallado</h2>
+        <button onclick="limpiarLog()">🧹 Limpiar</button>
+        <div id="debug-log" class="log">Esperando proceso...</div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let usuarioPrueba = {};
+        
+        function log(mensaje, tipo = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('debug-log');
+            const tipoIcon = tipo === 'error' ? '❌' : tipo === 'success' ? '✅' : tipo === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${tipoIcon} ${mensaje}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function limpiarLog() {
+            document.getElementById('debug-log').textContent = 'Log limpiado...\n';
+        }
+
+        function actualizarStep(stepNum, estado, mensaje) {
+            const step = document.getElementById(`step-${stepNum}`);
+            const result = document.getElementById(`step-${stepNum}-result`);
+            
+            step.className = `step ${estado}`;
+            result.textContent = mensaje;
+        }
+
+        function limpiarProceso() {
+            for (let i = 1; i <= 5; i++) {
+                const step = document.getElementById(`step-${i}`);
+                const result = document.getElementById(`step-${i}-result`);
+                step.className = 'step';
+                result.textContent = 'Pendiente';
+            }
+            limpiarLog();
+        }
+
+        function generarDatosAleatorios() {
+            const random = Math.floor(Math.random() * 10000);
+            document.getElementById('test-codigo').value = `U${random.toString().padStart(8, '0')}`;
+            document.getElementById('test-correo').value = `test${random}@test.com`;
+            log(`🎲 Datos aleatorios generados: U${random.toString().padStart(8, '0')}`);
+        }
+
+        function obtenerDatosUsuario() {
+            return {
+                codigo: document.getElementById('test-codigo').value,
+                nombre: document.getElementById('test-nombre').value,
+                apellido: document.getElementById('test-apellido').value,
+                correo: document.getElementById('test-correo').value,
+                contrasena: document.getElementById('test-contrasena').value,
+                telefono: document.getElementById('test-telefono').value,
+                direccion: document.getElementById('test-direccion').value
+            };
+        }
+
+        // ===== PROCESO COMPLETO =====
+        
+        async function ejecutarProcesoCompleto() {
+            log('🚀 Iniciando proceso completo de registro → login');
+            usuarioPrueba = obtenerDatosUsuario();
+            
+            try {
+                // Paso 1: Verificar que no existe
+                await paso1VerificarNoExiste();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Paso 2: Registrar
+                await paso2Registrar();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Paso 3: Verificar creación
+                await paso3VerificarCreacion();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Paso 4: Login con código
+                await paso4LoginCodigo();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Paso 5: Login con correo
+                await paso5LoginCorreo();
+                
+                log('🎉 Proceso completo terminado');
+                
+            } catch (error) {
+                log(`❌ Error en proceso completo: ${error.message}`, 'error');
+            }
+        }
+
+        async function paso1VerificarNoExiste() {
+            log(`🔍 Paso 1: Verificando que ${usuarioPrueba.codigo} no existe...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const existe = data.usuarios.find(u => u.codigo === usuarioPrueba.codigo);
+                    
+                    if (existe) {
+                        actualizarStep(1, 'failed', `Usuario ${usuarioPrueba.codigo} YA EXISTE`);
+                        log(`⚠️ Usuario ${usuarioPrueba.codigo} ya existe, generando nuevo código...`, 'warning');
+                        generarDatosAleatorios();
+                        usuarioPrueba = obtenerDatosUsuario();
+                        return await paso1VerificarNoExiste(); // Recursivo
+                    } else {
+                        actualizarStep(1, 'completed', `Usuario ${usuarioPrueba.codigo} no existe ✅`);
+                        log(`✅ Usuario ${usuarioPrueba.codigo} no existe, puede registrarse`);
+                    }
+                } else {
+                    throw new Error(`Error verificando usuarios: ${response.status}`);
+                }
+            } catch (error) {
+                actualizarStep(1, 'failed', `Error: ${error.message}`);
+                log(`❌ Error en paso 1: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function paso2Registrar() {
+            log(`📝 Paso 2: Registrando usuario ${usuarioPrueba.codigo}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/registro`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(usuarioPrueba)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    actualizarStep(2, 'completed', `Usuario registrado ✅ ID: ${data.userId}`);
+                    log(`✅ Usuario registrado exitosamente con ID: ${data.userId}`);
+                } else {
+                    actualizarStep(2, 'failed', `Error: ${data.error}`);
+                    log(`❌ Error en registro: ${data.error}`, 'error');
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                actualizarStep(2, 'failed', `Error: ${error.message}`);
+                log(`❌ Error en paso 2: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function paso3VerificarCreacion() {
+            log(`🔍 Paso 3: Verificando que ${usuarioPrueba.codigo} fue creado en BD...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const usuario = data.usuarios.find(u => u.codigo === usuarioPrueba.codigo);
+                    
+                    if (usuario) {
+                        actualizarStep(3, 'completed', `Usuario encontrado en BD ✅`);
+                        log(`✅ Usuario ${usuarioPrueba.codigo} encontrado en BD`);
+                        log(`   Nombre: ${usuario.nombre} ${usuario.apellido}`);
+                        log(`   Correo: ${usuario.correo}`);
+                        log(`   Rol: ${usuario.rol}`);
+                    } else {
+                        actualizarStep(3, 'failed', `Usuario NO encontrado en BD`);
+                        log(`❌ Usuario ${usuarioPrueba.codigo} NO encontrado en BD`, 'error');
+                        throw new Error('Usuario no encontrado en BD después del registro');
+                    }
+                } else {
+                    throw new Error(`Error consultando BD: ${response.status}`);
+                }
+            } catch (error) {
+                actualizarStep(3, 'failed', `Error: ${error.message}`);
+                log(`❌ Error en paso 3: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function paso4LoginCodigo() {
+            log(`🔐 Paso 4: Probando login con código ${usuarioPrueba.codigo}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: usuarioPrueba.codigo,
+                        contrasena: usuarioPrueba.contrasena
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    actualizarStep(4, 'completed', `Login con código exitoso ✅`);
+                    log(`✅ Login con código exitoso`);
+                    log(`   Usuario: ${data.usuario.nombre} ${data.usuario.apellido}`);
+                    log(`   Token: ${data.token ? 'Generado' : 'No generado'}`);
+                } else {
+                    actualizarStep(4, 'failed', `Login fallido: ${data.error}`);
+                    log(`❌ Login con código fallido: ${data.error}`, 'error');
+                    log(`   HTTP Status: ${response.status}`);
+                    log(`   Details: ${data.details || 'No disponibles'}`);
+                }
+            } catch (error) {
+                actualizarStep(4, 'failed', `Error: ${error.message}`);
+                log(`❌ Error en paso 4: ${error.message}`, 'error');
+            }
+        }
+
+        async function paso5LoginCorreo() {
+            log(`📧 Paso 5: Probando login con correo ${usuarioPrueba.correo}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: usuarioPrueba.correo,
+                        contrasena: usuarioPrueba.contrasena
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    actualizarStep(5, 'completed', `Login con correo exitoso ✅`);
+                    log(`✅ Login con correo exitoso`);
+                    log(`   Usuario: ${data.usuario.nombre} ${data.usuario.apellido}`);
+                    log(`   Token: ${data.token ? 'Generado' : 'No generado'}`);
+                } else {
+                    actualizarStep(5, 'failed', `Login fallido: ${data.error}`);
+                    log(`❌ Login con correo fallido: ${data.error}`, 'error');
+                    log(`   HTTP Status: ${response.status}`);
+                    log(`   Details: ${data.details || 'No disponibles'}`);
+                }
+            } catch (error) {
+                actualizarStep(5, 'failed', `Error: ${error.message}`);
+                log(`❌ Error en paso 5: ${error.message}`, 'error');
+            }
+        }
+
+        // ===== TESTS INDIVIDUALES =====
+        
+        async function testSoloRegistro() {
+            usuarioPrueba = obtenerDatosUsuario();
+            log(`📝 Test solo registro: ${usuarioPrueba.codigo}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/registro`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(usuarioPrueba)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('test-individual-result').className = 'test-section success';
+                    document.getElementById('test-individual-result').innerHTML = 
+                        `<strong>✅ Registro exitoso</strong><br>Usuario ID: ${data.userId}`;
+                    log(`✅ Registro exitoso: ${data.userId}`);
+                } else {
+                    document.getElementById('test-individual-result').className = 'test-section error';
+                    document.getElementById('test-individual-result').innerHTML = 
+                        `<strong>❌ Error en registro</strong><br>${data.error}`;
+                    log(`❌ Error en registro: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error en test registro: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSoloLogin() {
+            usuarioPrueba = obtenerDatosUsuario();
+            log(`🔐 Test solo login: ${usuarioPrueba.codigo}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: usuarioPrueba.codigo,
+                        contrasena: usuarioPrueba.contrasena
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('test-individual-result').className = 'test-section success';
+                    document.getElementById('test-individual-result').innerHTML = 
+                        `<strong>✅ Login exitoso</strong><br>Usuario: ${data.usuario.nombre} ${data.usuario.apellido}`;
+                    log(`✅ Login exitoso: ${data.usuario.nombre}`);
+                } else {
+                    document.getElementById('test-individual-result').className = 'test-section error';
+                    document.getElementById('test-individual-result').innerHTML = 
+                        `<strong>❌ Error en login</strong><br>${data.error}`;
+                    log(`❌ Error en login: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error en test login: ${error.message}`, 'error');
+            }
+        }
+
+        async function verificarUsuarioExiste() {
+            usuarioPrueba = obtenerDatosUsuario();
+            log(`🔍 Verificando si existe: ${usuarioPrueba.codigo}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const usuario = data.usuarios.find(u => u.codigo === usuarioPrueba.codigo);
+                    
+                    if (usuario) {
+                        document.getElementById('test-individual-result').className = 'test-section success';
+                        document.getElementById('test-individual-result').innerHTML = 
+                            `<strong>✅ Usuario existe</strong><br>Nombre: ${usuario.nombre} ${usuario.apellido}`;
+                        log(`✅ Usuario ${usuarioPrueba.codigo} existe en BD`);
+                    } else {
+                        document.getElementById('test-individual-result').className = 'test-section warning';
+                        document.getElementById('test-individual-result').innerHTML = 
+                            `<strong>⚠️ Usuario no existe</strong><br>Código: ${usuarioPrueba.codigo}`;
+                        log(`⚠️ Usuario ${usuarioPrueba.codigo} no existe en BD`);
+                    }
+                }
+            } catch (error) {
+                log(`❌ Error verificando usuario: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-generar datos al cargar
+        window.onload = function() {
+            log('🚀 Test Registro → Login iniciado');
+            generarDatosAleatorios();
+        };
+    </script>
+</body>
+</html>

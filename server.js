@@ -518,16 +518,22 @@ const TECH_CODES = {
 
 // Middleware para verificar código de técnico
 const verifyTechCode = (req, res, next) => {
-    const techCode = req.headers['techcode'] || req.headers['techCode'];
+    const techCode = req.headers['techcode'] || req.headers['techCode'] || req.headers['tech-code'];
+    
+    console.log('Headers recibidos:', req.headers);
+    console.log('Código de técnico extraído:', techCode);
     
     if (!techCode) {
-        return res.status(401).json({ error: 'Código de técnico requerido' });
+        return res.status(401).json({ error: 'Se requiere código de técnico' });
     }
     
     if (!TECH_CODES[techCode] || !TECH_CODES[techCode].activo) {
+        console.log('Código inválido:', techCode);
+        console.log('Códigos válidos:', Object.keys(TECH_CODES));
         return res.status(401).json({ error: 'Código de técnico inválido' });
     }
     
+    console.log('Código válido:', techCode);
     req.techCode = techCode;
     req.techInfo = TECH_CODES[techCode];
     next();
@@ -780,6 +786,38 @@ app.get('/api/debug/tecnicos', (req, res) => {
     res.json({
         success: true,
         data: tecnicos
+    });
+});
+
+// Endpoint de prueba simple para verificar códigos
+app.post('/api/tech/test', (req, res) => {
+    const techCode = req.headers['techcode'] || req.headers['techCode'] || req.headers['tech-code'];
+    
+    console.log('=== TEST TÉCNICO ===');
+    console.log('Headers:', req.headers);
+    console.log('Código recibido:', techCode);
+    console.log('Códigos válidos:', Object.keys(TECH_CODES));
+    
+    if (!techCode) {
+        return res.status(401).json({ 
+            error: 'Se requiere código de técnico',
+            headers: req.headers
+        });
+    }
+    
+    if (!TECH_CODES[techCode] || !TECH_CODES[techCode].activo) {
+        return res.status(401).json({ 
+            error: 'Código de técnico inválido',
+            codigoRecibido: techCode,
+            codigosValidos: Object.keys(TECH_CODES)
+        });
+    }
+    
+    res.json({
+        success: true,
+        message: 'Código de técnico válido',
+        techCode: techCode,
+        techInfo: TECH_CODES[techCode]
     });
 });
 

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Códigos de Técnico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Test Códigos de Técnico</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="techCode" class="form-label">Código de Técnico:</label>
+                            <input type="text" class="form-control" id="techCode" placeholder="TECH_001">
+                        </div>
+                        <button class="btn btn-primary" onclick="testCode()">Probar Código</button>
+                        <button class="btn btn-info ms-2" onclick="listCodes()">Ver Códigos Disponibles</button>
+                    </div>
+                    <div class="card-footer">
+                        <div id="result"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testCode() {
+            const techCode = document.getElementById('techCode').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!techCode) {
+                resultDiv.innerHTML = '<div class="alert alert-warning">Por favor ingresa un código</div>';
+                return;
+            }
+            
+            try {
+                resultDiv.innerHTML = '<div class="alert alert-info">Probando código...</div>';
+                
+                const response = await fetch('/api/tech/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'techCode': techCode
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5>✅ Código Válido</h5>
+                            <p><strong>Código:</strong> ${result.techCode}</p>
+                            <p><strong>Nombre:</strong> ${result.techInfo.nombre}</p>
+                            <p><strong>Email:</strong> ${result.techInfo.email}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h5>❌ Error</h5>
+                            <p>${result.error}</p>
+                            ${result.codigosValidos ? `<p><strong>Códigos válidos:</strong> ${result.codigosValidos.join(', ')}</p>` : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>❌ Error de Conexión</h5>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function listCodes() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.innerHTML = '<div class="alert alert-info">Obteniendo códigos...</div>';
+                
+                const response = await fetch('/api/debug/tecnicos');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const codesHtml = result.data.map(tech => `
+                        <li><strong>${tech.codigo}</strong> - ${tech.nombre} (${tech.email})</li>
+                    `).join('');
+                    
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-info">
+                            <h5>📋 Códigos Disponibles</h5>
+                            <ul>${codesHtml}</ul>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h5>❌ Error</h5>
+                            <p>No se pudieron obtener los códigos</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5>❌ Error de Conexión</h5>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Permitir probar con Enter
+        document.getElementById('techCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testCode();
+            }
+        });
+    </script>
+</body>
+</html>

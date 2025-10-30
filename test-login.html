@@ -4,69 +4,369 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Login - Las Gemelas</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .test-form { max-width: 400px; margin: 0 auto; }
-        input, button { width: 100%; padding: 10px; margin: 5px 0; }
-        .result { margin-top: 20px; padding: 10px; border-radius: 5px; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="test-form">
-        <h2>Test de Login - Las Gemelas</h2>
-        <form id="testForm">
-            <input type="text" id="testUsername" placeholder="Código de Usuario" required>
-            <input type="password" id="testPassword" placeholder="Contraseña" required>
-            <button type="submit">Probar Login</button>
-        </form>
-        <div id="result"></div>
-        
-        <h3>Credenciales de Prueba:</h3>
-        <p><strong>Usuario:</strong> U23201604 / Usuario123</p>
-        <p><strong>Técnico:</strong> T20137912 / Tecnico456</p>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h2 class="text-center mb-4">🔐 Test Login - Las Gemelas</h2>
+                
+                <!-- Login Form -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Iniciar Sesión</h5>
+                        <small class="text-muted">Puedes usar tu código (U12345) o correo electrónico</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="usuario" class="form-label">Usuario o Correo:</label>
+                                <input type="text" id="usuario" class="form-control" 
+                                       placeholder="U23201604 o usuario@email.com" required>
+                                <div class="form-text">Ingresa tu código (que comienza con U) o tu correo electrónico</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contrasena" class="form-label">Contraseña:</label>
+                                <div class="input-group">
+                                    <input type="password" id="contrasena" class="form-control" required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                        <i class="bi bi-eye" id="passwordIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+                        </form>
+                        
+                        <div id="loginResult" class="mt-3"></div>
+                    </div>
+                </div>
+                
+                <!-- Usuarios de Prueba -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>👥 Usuarios de Prueba</h5>
+                        <button class="btn btn-sm btn-outline-info" onclick="cargarUsuarios()">Cargar Usuarios</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="usuarios-prueba">
+                            <p class="text-muted">Haz clic en "Cargar Usuarios" para ver los usuarios disponibles</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Información del Usuario Logueado -->
+                <div class="card mb-4" id="perfilCard" style="display: none;">
+                    <div class="card-header">
+                        <h5>👤 Perfil del Usuario</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="logout()">Cerrar Sesión</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="perfilInfo"></div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <button class="btn btn-info w-100" onclick="verPerfil()">Ver Perfil</button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-success w-100" onclick="verCompras()">Mis Compras</button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-warning w-100" onclick="verAlquileres()">Mis Alquileres</button>
+                            </div>
+                        </div>
+                        
+                        <div id="datosUsuario" class="mt-3"></div>
+                    </div>
+                </div>
+                
+                <!-- Enlaces Útiles -->
+                <div class="text-center">
+                    <a href="registro-simple.html" class="btn btn-outline-primary me-2">Registrarse</a>
+                    <a href="test-carrito.html" class="btn btn-outline-success me-2">Ir al Carrito</a>
+                    <a href="index.html" class="btn btn-outline-secondary">Volver al Inicio</a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const testForm = document.getElementById('testForm');
-            const testUsername = document.getElementById('testUsername');
-            const testPassword = document.getElementById('testPassword');
-            const result = document.getElementById('result');
+        let currentToken = null;
+        let currentUser = null;
 
-            // Cuentas de prueba
-            const accounts = {
-                "U23201604": { password: "Usuario123", role: "user" },
-                "T20137912": { password: "Tecnico456", role: "tech" }
-            };
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('contrasena');
+            const passwordIcon = document.getElementById('passwordIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.className = 'bi bi-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.className = 'bi bi-eye';
+            }
+        }
 
-            testForm.addEventListener('submit', (e) => {
-                e.preventDefault();
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const usuario = document.getElementById('usuario').value.trim();
+            const contrasena = document.getElementById('contrasena').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            if (!usuario || !contrasena) {
+                resultDiv.innerHTML = '<div class="alert alert-warning">Por favor completa todos los campos</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="alert alert-info">Iniciando sesión...</div>';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        usuario: usuario,
+                        contrasena: contrasena
+                    })
+                });
                 
-                const username = testUsername.value.trim().toUpperCase();
-                const password = testPassword.value;
-                const account = accounts[username];
+                const result = await response.json();
+                
+                if (response.ok) {
+                    currentToken = result.token;
+                    currentUser = result.usuario;
+                    
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Login Exitoso</h6>
+                            <p><strong>Bienvenido:</strong> ${result.usuario.nombre} ${result.usuario.apellido}</p>
+                            <p><strong>Código:</strong> ${result.usuario.codigo}</p>
+                            <p><strong>Rol:</strong> ${result.usuario.rol}</p>
+                        </div>
+                    `;
+                    
+                    // Mostrar perfil
+                    document.getElementById('perfilCard').style.display = 'block';
+                    document.getElementById('perfilInfo').innerHTML = `
+                        <h6>Sesión Activa</h6>
+                        <p><strong>Usuario:</strong> ${result.usuario.nombre} ${result.usuario.apellido} (${result.usuario.codigo})</p>
+                        <p><strong>Correo:</strong> ${result.usuario.correo}</p>
+                        <p><strong>Rol:</strong> <span class="badge ${result.usuario.rol === 'admin' ? 'bg-danger' : 'bg-success'}">${result.usuario.rol}</span></p>
+                    `;
+                    
+                    // Limpiar formulario
+                    document.getElementById('loginForm').reset();
+                    
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error de conexión: ${error.message}</div>`;
+            }
+        });
 
-                if (account && account.password === password) {
-                    result.className = 'result success';
-                    result.innerHTML = `
-                        ✅ <strong>Login Exitoso!</strong><br>
-                        Usuario: ${username}<br>
-                        Rol: ${account.role}<br>
-                        Redirección: ${account.role === 'user' ? 'catalogo.html' : 'Interno.html'}
+        // Cargar usuarios de prueba
+        async function cargarUsuarios() {
+            const container = document.getElementById('usuarios-prueba');
+            container.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+            
+            try {
+                const response = await fetch('/api/usuarios-tech?techCode=TECH_001', {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.usuarios.length > 0) {
+                    let html = '<div class="table-responsive"><table class="table table-sm">';
+                    html += '<thead><tr><th>Código</th><th>Nombre</th><th>Correo</th><th>Acciones</th></tr></thead><tbody>';
+                    
+                    result.usuarios.slice(0, 5).forEach(usuario => {
+                        html += `
+                            <tr>
+                                <td><code>${usuario.codigo}</code></td>
+                                <td>${usuario.nombre} ${usuario.apellido}</td>
+                                <td>${usuario.correo}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" 
+                                            onclick="probarLogin('${usuario.codigo}')">
+                                        Probar Código
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" 
+                                            onclick="probarLogin('${usuario.correo}')">
+                                        Probar Correo
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table></div>';
+                    html += '<div class="alert alert-info mt-2"><small><strong>Nota:</strong> Para probar el login, necesitarás la contraseña real del usuario. Los botones solo llenan el campo de usuario.</small></div>';
+                    
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="alert alert-warning">No se encontraron usuarios. <a href="registro-simple.html">Registra algunos usuarios</a> primero.</div>';
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="alert alert-danger">Error cargando usuarios</div>';
+            }
+        }
+
+        // Probar login con usuario específico
+        function probarLogin(identificador) {
+            document.getElementById('usuario').value = identificador;
+            document.getElementById('contrasena').focus();
+        }
+
+        // Ver perfil del usuario
+        async function verPerfil() {
+            if (!currentToken) return;
+            
+            const container = document.getElementById('datosUsuario');
+            container.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm"></div> Cargando perfil...</div>';
+            
+            try {
+                const response = await fetch('/api/perfil', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const usuario = result.usuario;
+                    container.innerHTML = `
+                        <div class="alert alert-info">
+                            <h6>📋 Información Completa del Perfil</h6>
+                            <p><strong>ID:</strong> ${usuario.id}</p>
+                            <p><strong>Código:</strong> ${usuario.codigo}</p>
+                            <p><strong>Nombre:</strong> ${usuario.nombre} ${usuario.apellido}</p>
+                            <p><strong>Correo:</strong> ${usuario.correo}</p>
+                            <p><strong>Teléfono:</strong> ${usuario.telefono || 'No especificado'}</p>
+                            <p><strong>Dirección:</strong> ${usuario.direccion || 'No especificada'}</p>
+                            <p><strong>Rol:</strong> ${usuario.rol}</p>
+                            <p><strong>Fecha de registro:</strong> ${new Date(usuario.fecha_registro).toLocaleString()}</p>
+                        </div>
                     `;
                 } else {
-                    result.className = 'result error';
-                    result.innerHTML = `
-                        ❌ <strong>Login Fallido</strong><br>
-                        Usuario ingresado: "${username}"<br>
-                        Contraseña ingresada: "${password}"<br>
-                        Cuenta encontrada: ${account ? 'Sí' : 'No'}
-                    `;
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${result.error}</div>`;
                 }
-            });
-        });
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Error de conexión</div>`;
+            }
+        }
+
+        // Ver compras del usuario
+        async function verCompras() {
+            if (!currentToken) return;
+            
+            const container = document.getElementById('datosUsuario');
+            container.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm"></div> Cargando compras...</div>';
+            
+            try {
+                const response = await fetch('/api/mis-compras', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.compras.length > 0) {
+                        let html = '<div class="alert alert-success"><h6>🛍️ Mis Compras</h6>';
+                        html += '<div class="table-responsive"><table class="table table-sm">';
+                        html += '<thead><tr><th>ID</th><th>Producto</th><th>Cantidad</th><th>Total</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>';
+                        
+                        result.compras.forEach(compra => {
+                            html += `
+                                <tr>
+                                    <td>${compra.id}</td>
+                                    <td>${compra.producto_nombre}</td>
+                                    <td>${compra.cantidad}</td>
+                                    <td>$${compra.precio_total}</td>
+                                    <td><span class="badge bg-primary">${compra.estado}</span></td>
+                                    <td>${new Date(compra.fecha_compra).toLocaleDateString()}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += '</tbody></table></div></div>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<div class="alert alert-info">No tienes compras registradas</div>';
+                    }
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Error de conexión</div>`;
+            }
+        }
+
+        // Ver alquileres del usuario
+        async function verAlquileres() {
+            if (!currentToken) return;
+            
+            const container = document.getElementById('datosUsuario');
+            container.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm"></div> Cargando alquileres...</div>';
+            
+            try {
+                const response = await fetch('/api/mis-alquileres', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.alquileres.length > 0) {
+                        let html = '<div class="alert alert-warning"><h6>🏠 Mis Alquileres</h6>';
+                        html += '<div class="table-responsive"><table class="table table-sm">';
+                        html += '<thead><tr><th>ID</th><th>Producto</th><th>Días</th><th>Total</th><th>Estado</th><th>Inicio</th><th>Fin</th></tr></thead><tbody>';
+                        
+                        result.alquileres.forEach(alquiler => {
+                            html += `
+                                <tr>
+                                    <td>${alquiler.id}</td>
+                                    <td>${alquiler.producto_nombre}</td>
+                                    <td>${alquiler.dias_alquiler}</td>
+                                    <td>$${alquiler.precio_total}</td>
+                                    <td><span class="badge bg-warning">${alquiler.estado}</span></td>
+                                    <td>${new Date(alquiler.fecha_inicio).toLocaleDateString()}</td>
+                                    <td>${new Date(alquiler.fecha_fin).toLocaleDateString()}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += '</tbody></table></div></div>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<div class="alert alert-info">No tienes alquileres registrados</div>';
+                    }
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">Error de conexión</div>`;
+            }
+        }
+
+        // Cerrar sesión
+        function logout() {
+            currentToken = null;
+            currentUser = null;
+            document.getElementById('perfilCard').style.display = 'none';
+            document.getElementById('loginResult').innerHTML = '';
+            document.getElementById('datosUsuario').innerHTML = '';
+        }
+
+        // Auto-cargar usuarios al iniciar
+        window.onload = function() {
+            setTimeout(cargarUsuarios, 1000);
+        };
     </script>
 </body>
 </html>

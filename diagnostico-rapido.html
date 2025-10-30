@@ -30,6 +30,7 @@
                     </div>
                     <div class="card-body">
                         <button class="btn btn-success btn-sm" onclick="testRegistro()">Test</button>
+                        <button class="btn btn-primary btn-sm ms-1" onclick="testLogin()">Test Login</button>
                         <div id="registro-result" class="mt-2"></div>
                     </div>
                 </div>
@@ -45,6 +46,7 @@
                     <div class="card-body">
                         <input type="text" id="techCode" class="form-control form-control-sm mb-2" value="TECH_001">
                         <button class="btn btn-warning btn-sm" onclick="testTecnicos()">Test</button>
+                        <button class="btn btn-primary btn-sm ms-1" onclick="testCarrito()">Test Carrito</button>
                         <div id="tech-result" class="mt-2"></div>
                     </div>
                 </div>
@@ -170,6 +172,115 @@
                 } else {
                     result.innerHTML = `<small class="text-danger">❌ ${data.error}</small>`;
                 }
+            } catch (error) {
+                result.innerHTML = '<small class="text-danger">❌ Error conexión</small>';
+            }
+        }
+
+        async function testCarrito() {
+            const result = document.getElementById('tech-result');
+            result.innerHTML = '<small class="text-info">Probando carrito...</small>';
+            
+            const carritoData = {
+                usuario_codigo: 'U23201604',
+                compras: [
+                    { producto_id: 1, cantidad: 1, notas: 'Compra de prueba' }
+                ],
+                alquileres: [
+                    { 
+                        producto_id: 2, 
+                        cantidad: 1, 
+                        fecha_inicio: '2024-01-15', 
+                        fecha_fin: '2024-01-20',
+                        deposito: 50000,
+                        notas: 'Alquiler de prueba'
+                    }
+                ],
+                metodo_pago: 'efectivo',
+                direccion_envio: 'Dirección de prueba'
+            };
+            
+            try {
+                const response = await fetch('/api/procesar-carrito', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(carritoData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<small class="text-success">✅ Carrito OK (Total: $${data.total_general})</small>`;
+                } else {
+                    result.innerHTML = `<small class="text-danger">❌ ${data.error}</small>`;
+                }
+            } catch (error) {
+                result.innerHTML = '<small class="text-danger">❌ Error conexión</small>';
+            }
+        }
+
+        async function testLogin() {
+            const result = document.getElementById('registro-result');
+            result.innerHTML = '<small class="text-info">Probando login...</small>';
+            
+            // Primero crear un usuario de prueba
+            const timestamp = Date.now();
+            const userData = {
+                codigo: `U${timestamp}`,
+                nombre: 'Test',
+                apellido: 'Login',
+                correo: `login${timestamp}@test.com`,
+                contrasena: 'Test123@'
+            };
+            
+            try {
+                // Registrar usuario
+                const regResponse = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (!regResponse.ok) {
+                    result.innerHTML = '<small class="text-danger">❌ Error creando usuario</small>';
+                    return;
+                }
+                
+                // Probar login con código
+                const loginResponse1 = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: userData.codigo,
+                        contrasena: userData.contrasena
+                    })
+                });
+                
+                const loginResult1 = await loginResponse1.json();
+                
+                if (!loginResponse1.ok) {
+                    result.innerHTML = `<small class="text-danger">❌ Login código falló: ${loginResult1.error}</small>`;
+                    return;
+                }
+                
+                // Probar login con correo
+                const loginResponse2 = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: userData.correo,
+                        contrasena: userData.contrasena
+                    })
+                });
+                
+                const loginResult2 = await loginResponse2.json();
+                
+                if (loginResponse2.ok) {
+                    result.innerHTML = '<small class="text-success">✅ Login OK (código y correo)</small>';
+                } else {
+                    result.innerHTML = `<small class="text-warning">⚠️ Código OK, correo falló: ${loginResult2.error}</small>`;
+                }
+                
             } catch (error) {
                 result.innerHTML = '<small class="text-danger">❌ Error conexión</small>';
             }

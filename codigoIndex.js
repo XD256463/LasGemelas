@@ -62,62 +62,127 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     console.log('📋 Sistema de autenticación configurado');
+    
+    // Función para mostrar errores
+    function showError(errorElement, message) {
+        if (errorElement) {
+            errorElement.className = 'alert alert-danger';
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Ocultar mensaje después de 5 segundos
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+    }
 
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         console.log('📝 Formulario enviado');
         
         const usernameInput = document.getElementById('loginUsername');
         const passwordInput = document.getElementById('loginPassword');
         const errorMessage = document.getElementById('errorMessage');
+        const loginButton = document.getElementById('loginButton');
         
         if (!usernameInput || !passwordInput) {
             console.error('❌ No se encontraron los campos de entrada');
             return;
         }
 
-        const username = usernameInput.value.trim();
-        const password = passwordInput.value;
+        const usuario = usernameInput.value.trim();
+        const contrasena = passwordInput.value;
         
-        console.log('🔍 Datos ingresados:', { username });
+        if (!usuario || !contrasena) {
+            showError(errorMessage, 'Por favor completa todos los campos');
+            return;
+        }
         
-        const validation = validateCredentials(username, password);
-        console.log('🔐 Resultado de validación:', validation);
-
-        if (validation.isValid) {
-            console.log('✅ Credenciales correctas');
+        console.log('🔍 Intentando login con:', { usuario });
+        
+        // Deshabilitar botón durante el proceso
+        if (loginButton) {
+            loginButton.disabled = true;
+            loginButton.textContent = '⏳ Iniciando sesión...';
+        }
+        
+        try {
+            // Intentar login con el servidor
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    usuario: usuario,
+                    contrasena: contrasena
+                })
+            });
             
-            // Guardar información de sesión
-            sessionStorage.setItem('currentUser', JSON.stringify({
-                username: username.toUpperCase(),
-                role: validation.role,
-                source: validation.source,
-                loginTime: new Date().toISOString()
-            }));
+            const result = await response.json();
             
-            let redirectPage = '';
-            let welcomeMessage = '';
-            
-            if (validation.role === 'user') {
-                redirectPage = 'catalogo.html';
-                welcomeMessage = '¡Bienvenido usuario!';
-            } else if (validation.role === 'tech') {
-                redirectPage = 'Interno.html';
-                welcomeMessage = '¡Bienvenido técnico!';
+            if (response.ok) {
+                console.log('✅ Login exitoso:', result.usuario);
+                
+                // Guardar información de sesión
+                sessionStorage.setItem('currentUser', JSON.stringify({
+                    id: result.usuario.id,
+                    codigo: result.usuario.codigo,
+                    nombre: result.usuario.nombre,
+                    apellido: result.usuario.apellido,
+                    correo: result.usuario.correo,
+                    rol: result.usuario.rol,
+                    token: result.token,
+                    loginTime: new Date().toISOString()
+                }));
+                
+                // Determinar página de destino según el rol
+                let redirectPage = '';
+                let welcomeMessage = '';
+                
+                if (result.usuario.rol === 'admin') {
+                    redirectPage = 'panel-tecnico.html';
+                    welcomeMessage = `¡Bienvenido administrador ${result.usuario.nombre}!`;
+                } else {
+                    redirectPage = 'test-carrito.html'; // Por ahora redirigir al carrito
+                    welcomeMessage = `¡Bienvenido ${result.usuario.nombre}!`;
+                }
+                
+                console.log('🔄 Redirigiendo a:', redirectPage);
+                
+                if (errorMessage) {
+                    errorMessage.className = 'alert alert-success';
+                    errorMessage.textContent = `${welcomeMessage} Redirigiendo...`;
+                    errorMessage.style.display = 'block';
+                }
+                
+                // Redirigir después de 1.5 segundos
+                setTimeout(() => {
+                    window.location.href = redirectPage;
+                }, 1500);
+                
+            } else {
+                console.log('❌ Login fallido:', result.error);
+                showError(errorMessage, result.error || 'Credenciales inválidas');
+                
+                // Rehabilitar botón
+                if (loginButton) {
+                    loginButton.disabled = false;
+                    loginButton.textContent = '✨ Iniciar Sesión ✨';
+                }
             }
             
-            console.log('🔄 Redirigiendo a:', redirectPage);
+        } catch (error) {
+            console.error('❌ Error de conexión:', error);
+            showError(errorMessage, 'Error de conexión. Verifica tu internet.');
             
-            if (errorMessage) {
-                errorMessage.className = 'alert success';
-                errorMessage.textContent = `${welcomeMessage} Redirigiendo...`;
-                errorMessage.style.display = 'block';
+            // Rehabilitar botón
+            if (loginButton) {
+                loginButton.disabled = false;
+                loginButton.textContent = '✨ Iniciar Sesión ✨';
             }
-            
-            // Redirigir después de 1.5 segundos
-            setTimeout(() => {
-                window.location.href = redirectPage;
-            }, 1500);
+        }
             
         } else {
             console.log('❌ Credenciales incorrectas');

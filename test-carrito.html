@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Carrito de Compras</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .carrito-item { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+        .compra-item { border-left: 4px solid #28a745; }
+        .alquiler-item { border-left: 4px solid #ffc107; }
+        .total-section { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>🛒 Test Carrito de Compras y Alquileres</h2>
+        
+        <!-- Información del Usuario -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>👤 Información del Usuario</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Código Usuario:</label>
+                        <input type="text" id="usuario-codigo" class="form-control" value="U23201604">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Método de Pago:</label>
+                        <select id="metodo-pago" class="form-control">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="transferencia">Transferencia</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Dirección:</label>
+                        <input type="text" id="direccion" class="form-control" value="Calle 123 #45-67">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Productos Disponibles -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>🎭 Productos Disponibles</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="cargarProductos()">Cargar Productos</button>
+            </div>
+            <div class="card-body">
+                <div id="productos-disponibles" class="row">
+                    <div class="col-12 text-center">
+                        <button class="btn btn-info" onclick="cargarProductos()">Cargar Catálogo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Carrito -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between">
+                <h5>🛒 Mi Carrito</h5>
+                <button class="btn btn-sm btn-outline-danger" onclick="limpiarCarrito()">Limpiar Carrito</button>
+            </div>
+            <div class="card-body">
+                <div id="carrito-items">
+                    <p class="text-muted text-center">El carrito está vacío</p>
+                </div>
+                
+                <div class="total-section mt-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <label class="form-label">Notas Generales:</label>
+                            <textarea id="notas-generales" class="form-control" rows="2" placeholder="Notas adicionales para el pedido..."></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-end">
+                                <h6>Total Compras: $<span id="total-compras">0</span></h6>
+                                <h6>Total Alquileres: $<span id="total-alquileres">0</span></h6>
+                                <h5><strong>Total General: $<span id="total-general">0</span></strong></h5>
+                                <button class="btn btn-success btn-lg mt-2" onclick="procesarCarrito()" id="btn-procesar" disabled>
+                                    Procesar Carrito
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Resultado -->
+        <div id="resultado" class="mt-4"></div>
+    </div>
+
+    <script>
+        let carrito = {
+            compras: [],
+            alquileres: []
+        };
+        
+        let productos = [];
+
+        async function cargarProductos() {
+            try {
+                const response = await fetch('/api/productos');
+                const result = await response.json();
+                
+                if (response.ok) {
+                    productos = result.productos;
+                    mostrarProductos();
+                } else {
+                    document.getElementById('productos-disponibles').innerHTML = 
+                        `<div class="col-12"><div class="alert alert-danger">Error: ${result.error}</div></div>`;
+                }
+            } catch (error) {
+                document.getElementById('productos-disponibles').innerHTML = 
+                    `<div class="col-12"><div class="alert alert-danger">Error de conexión: ${error.message}</div></div>`;
+            }
+        }
+
+        function mostrarProductos() {
+            const container = document.getElementById('productos-disponibles');
+            
+            if (productos.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            No hay productos disponibles. 
+                            <a href="diagnostico-rapido.html" target="_blank">Crear productos de ejemplo</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            productos.forEach(producto => {
+                html += `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">${producto.nombre}</h6>
+                                <p class="card-text small">${producto.descripcion}</p>
+                                <p class="mb-1"><strong>Compra:</strong> $${producto.precio_compra} (Stock: ${producto.stock_compra})</p>
+                                <p class="mb-2"><strong>Alquiler:</strong> $${producto.precio_alquiler}/día (Stock: ${producto.stock_alquiler})</p>
+                                
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-sm btn-success" onclick="agregarCompra(${producto.id})" 
+                                            ${producto.stock_compra <= 0 ? 'disabled' : ''}>
+                                        Comprar
+                                    </button>
+                                    <button class="btn btn-sm btn-warning" onclick="agregarAlquiler(${producto.id})"
+                                            ${producto.stock_alquiler <= 0 ? 'disabled' : ''}>
+                                        Alquilar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function agregarCompra(productoId) {
+            const producto = productos.find(p => p.id === productoId);
+            if (!producto) return;
+            
+            const cantidad = parseInt(prompt('¿Cuántas unidades deseas comprar?', '1'));
+            if (!cantidad || cantidad <= 0) return;
+            
+            if (cantidad > producto.stock_compra) {
+                alert('No hay suficiente stock disponible');
+                return;
+            }
+            
+            carrito.compras.push({
+                producto_id: producto.id,
+                producto_nombre: producto.nombre,
+                cantidad: cantidad,
+                precio_unitario: producto.precio_compra,
+                precio_total: producto.precio_compra * cantidad,
+                notas: ''
+            });
+            
+            actualizarCarrito();
+        }
+
+        function agregarAlquiler(productoId) {
+            const producto = productos.find(p => p.id === productoId);
+            if (!producto) return;
+            
+            const cantidad = parseInt(prompt('¿Cuántas unidades deseas alquilar?', '1'));
+            if (!cantidad || cantidad <= 0) return;
+            
+            if (cantidad > producto.stock_alquiler) {
+                alert('No hay suficiente stock disponible para alquiler');
+                return;
+            }
+            
+            // Configurar fechas por defecto
+            const hoy = new Date();
+            const manana = new Date(hoy);
+            manana.setDate(hoy.getDate() + 1);
+            const semana = new Date(hoy);
+            semana.setDate(hoy.getDate() + 7);
+            
+            const fechaInicio = prompt('Fecha de inicio (YYYY-MM-DD):', manana.toISOString().split('T')[0]);
+            const fechaFin = prompt('Fecha de fin (YYYY-MM-DD):', semana.toISOString().split('T')[0]);
+            
+            if (!fechaInicio || !fechaFin) return;
+            
+            const inicio = new Date(fechaInicio);
+            const fin = new Date(fechaFin);
+            const dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24));
+            
+            if (dias <= 0) {
+                alert('Las fechas no son válidas');
+                return;
+            }
+            
+            const deposito = parseFloat(prompt('Depósito (opcional):', '50000')) || 0;
+            
+            carrito.alquileres.push({
+                producto_id: producto.id,
+                producto_nombre: producto.nombre,
+                cantidad: cantidad,
+                fecha_inicio: fechaInicio,
+                fecha_fin: fechaFin,
+                dias_alquiler: dias,
+                precio_unitario: producto.precio_alquiler,
+                precio_total: producto.precio_alquiler * cantidad * dias,
+                deposito: deposito,
+                notas: ''
+            });
+            
+            actualizarCarrito();
+        }
+
+        function actualizarCarrito() {
+            const container = document.getElementById('carrito-items');
+            
+            if (carrito.compras.length === 0 && carrito.alquileres.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">El carrito está vacío</p>';
+                document.getElementById('btn-procesar').disabled = true;
+                actualizarTotales();
+                return;
+            }
+            
+            let html = '';
+            
+            // Mostrar compras
+            carrito.compras.forEach((item, index) => {
+                html += `
+                    <div class="carrito-item compra-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-success">🛍️ COMPRA: ${item.producto_nombre}</h6>
+                                <p class="mb-1">Cantidad: ${item.cantidad} x $${item.precio_unitario} = $${item.precio_total}</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarCompra(${index})">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Mostrar alquileres
+            carrito.alquileres.forEach((item, index) => {
+                html += `
+                    <div class="carrito-item alquiler-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-warning">🏠 ALQUILER: ${item.producto_nombre}</h6>
+                                <p class="mb-1">Cantidad: ${item.cantidad} x $${item.precio_unitario}/día x ${item.dias_alquiler} días = $${item.precio_total}</p>
+                                <p class="mb-1 small">Del ${item.fecha_inicio} al ${item.fecha_fin}</p>
+                                ${item.deposito > 0 ? `<p class="mb-1 small">Depósito: $${item.deposito}</p>` : ''}
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarAlquiler(${index})">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            document.getElementById('btn-procesar').disabled = false;
+            actualizarTotales();
+        }
+
+        function actualizarTotales() {
+            const totalCompras = carrito.compras.reduce((sum, item) => sum + item.precio_total, 0);
+            const totalAlquileres = carrito.alquileres.reduce((sum, item) => sum + item.precio_total, 0);
+            const totalGeneral = totalCompras + totalAlquileres;
+            
+            document.getElementById('total-compras').textContent = totalCompras.toLocaleString();
+            document.getElementById('total-alquileres').textContent = totalAlquileres.toLocaleString();
+            document.getElementById('total-general').textContent = totalGeneral.toLocaleString();
+        }
+
+        function eliminarCompra(index) {
+            carrito.compras.splice(index, 1);
+            actualizarCarrito();
+        }
+
+        function eliminarAlquiler(index) {
+            carrito.alquileres.splice(index, 1);
+            actualizarCarrito();
+        }
+
+        function limpiarCarrito() {
+            carrito = { compras: [], alquileres: [] };
+            actualizarCarrito();
+        }
+
+        async function procesarCarrito() {
+            const resultDiv = document.getElementById('resultado');
+            resultDiv.innerHTML = '<div class="alert alert-info">Procesando carrito...</div>';
+            
+            const carritoData = {
+                usuario_codigo: document.getElementById('usuario-codigo').value,
+                compras: carrito.compras,
+                alquileres: carrito.alquileres,
+                metodo_pago: document.getElementById('metodo-pago').value,
+                direccion_envio: document.getElementById('direccion').value,
+                notas_generales: document.getElementById('notas-generales').value
+            };
+            
+            try {
+                const response = await fetch('/api/procesar-carrito', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(carritoData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    let html = `
+                        <div class="alert alert-success">
+                            <h5>✅ ¡Carrito Procesado Exitosamente!</h5>
+                            <p><strong>Total General:</strong> $${result.total_general.toLocaleString()}</p>
+                    `;
+                    
+                    if (result.compras_procesadas.length > 0) {
+                        html += '<h6>Compras:</h6><ul>';
+                        result.compras_procesadas.forEach(compra => {
+                            html += `<li>${compra.producto} (${compra.cantidad} unidades) - $${compra.precio_total}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                    
+                    if (result.alquileres_procesados.length > 0) {
+                        html += '<h6>Alquileres:</h6><ul>';
+                        result.alquileres_procesados.forEach(alquiler => {
+                            html += `<li>${alquiler.producto} (${alquiler.cantidad} unidades, ${alquiler.dias_alquiler} días) - $${alquiler.precio_total}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                    
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                    
+                    // Limpiar carrito después del éxito
+                    limpiarCarrito();
+                    
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">❌ Error de conexión: ${error.message}</div>`;
+            }
+        }
+
+        // Cargar productos al iniciar
+        window.onload = function() {
+            setTimeout(cargarProductos, 500);
+        };
+    </script>
+</body>
+</html>

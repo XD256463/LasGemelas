@@ -130,36 +130,49 @@ const verifyToken = (req, res, next) => {
 app.post('/api/registro', async (req, res) => {
     try {
         console.log('=== REGISTRO DEBUG ===');
-        console.log('Headers:', req.headers);
-        console.log('Body completo:', JSON.stringify(req.body, null, 2));
-        console.log('Tipo de body:', typeof req.body);
-        console.log('Keys del body:', Object.keys(req.body));
+        console.log('Body recibido:', JSON.stringify(req.body, null, 2));
         
-        const { codigo, nombre, apellido, correo, contrasena, telefono, direccion } = req.body;
+        // Manejar tanto formato nuevo como formato antiguo
+        let codigo, nombre, apellido, correo, contrasena, telefono, direccion;
         
-        console.log('Valores extraídos:');
-        console.log('- codigo:', codigo, typeof codigo);
-        console.log('- nombre:', nombre, typeof nombre);
-        console.log('- apellido:', apellido, typeof apellido);
-        console.log('- correo:', correo, typeof correo);
-        console.log('- contrasena:', contrasena, typeof contrasena);
+        // Formato nuevo (correcto)
+        if (req.body.codigo && req.body.correo && req.body.contrasena) {
+            ({ codigo, nombre, apellido, correo, contrasena, telefono, direccion } = req.body);
+            console.log('Usando formato NUEVO');
+        }
+        // Formato antiguo (fallback)
+        else if (req.body.email && req.body.password) {
+            console.log('Usando formato ANTIGUO - convirtiendo...');
+            codigo = req.body.codigo || `U${Date.now()}`;
+            nombre = req.body.nombre || req.body.name || '';
+            apellido = req.body.apellido || req.body.lastName || 'Usuario';
+            correo = req.body.email;
+            contrasena = req.body.password;
+            telefono = req.body.telefono || req.body.phone;
+            direccion = req.body.direccion || req.body.address;
+        }
+        // Si no hay ningún formato reconocible
+        else {
+            console.log('Formato no reconocido');
+            return res.status(400).json({ 
+                error: 'Formato de datos no válido. Se requiere: codigo, nombre, apellido, correo, contrasena',
+                recibido: Object.keys(req.body)
+            });
+        }
+        
+        console.log('Datos procesados:', { codigo, nombre, apellido, correo, contrasena: '***' });
 
         // Validar datos requeridos
-        if (!codigo || !nombre || !apellido || !correo || !contrasena) {
-            console.log('Datos faltantes:', { 
-                codigo: !!codigo, 
-                nombre: !!nombre, 
-                apellido: !!apellido, 
-                correo: !!correo, 
-                contrasena: !!contrasena 
-            });
+        if (!codigo || !nombre || !correo || !contrasena) {
+            console.log('Datos faltantes después del procesamiento');
             return res.status(400).json({ 
-                error: 'Código, nombre, apellido, correo y contraseña son requeridos',
-                debug: {
-                    recibido: req.body,
-                    campos: { codigo, nombre, apellido, correo, contrasena }
-                }
+                error: 'Código, nombre, correo y contraseña son requeridos'
             });
+        }
+
+        // Asegurar que apellido tenga un valor
+        if (!apellido) {
+            apellido = 'Usuario';
         }
 
         // Validar que el código comience con "U"

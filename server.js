@@ -13,15 +13,7 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
-// Endpoint básico para verificar códigos de técnico
-app.get('/api/tech-status', (req, res) => {
-    res.json({
-        status: 'OK',
-        message: 'Funcionalidad de técnicos activa',
-        codigosDisponibles: Object.keys(TECH_CODES),
-        timestamp: new Date().toISOString()
-    });
-});
+
 
 // Middleware
 app.use(cors());
@@ -523,8 +515,18 @@ const TECH_CODES = {
     'TECH_001': { nombre: 'Técnico Principal', email: 'tech001@lasgemelas.com', activo: true },
     'TECH_002': { nombre: 'Técnico Secundario', email: 'tech002@lasgemelas.com', activo: true },
     'TECH_ADMIN': { nombre: 'Administrador', email: 'admin@lasgemelas.com', activo: true },
-    'T20137912': { nombre: 'Técnico Interno', email: 'interno@lasgemelas.com', activo: true }
+    'T20137912': { nombre:'Técnico Interno', email: 'interno@lasgemelas.com', activo: true }
 };
+
+// Endpoint básico para verificar códigos de técnico
+app.get('/api/tech-status', (req, res) => {
+    res.json({
+        status: 'OK',
+        message: 'Funcionalidad de técnicos activa',
+        codigosDisponibles: Object.keys(TECH_CODES),
+        timestamp: new Date().toISOString()
+    });
+});
 
 // Middleware para verificar código de técnico
 const verifyTechCode = (req, res, next) => {

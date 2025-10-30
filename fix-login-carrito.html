@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Login y Carrito - Las Gemelas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Login y Carrito - Las Gemelas</h1>
+        <p>Esta página diagnostica y arregla los problemas de login y carrito.</p>
+    </div>
+
+    <!-- Test de Login -->
+    <div class="container">
+        <h2>1. 🔐 Test de Login Completo</h2>
+        <div class="grid">
+            <div>
+                <h4>Credenciales de Prueba:</h4>
+                <input type="text" id="login-usuario" placeholder="Usuario/Correo" value="U23201604">
+                <input type="password" id="login-password" placeholder="Contraseña" value="Usuario123@">
+                <button onclick="testLogin()">🔐 Test Login</button>
+                <button onclick="testLoginBD()">🗄️ Test Login BD</button>
+            </div>
+            <div>
+                <h4>Usuarios Disponibles:</h4>
+                <button onclick="testUsuario('U23201604', 'Usuario123@')">👤 Usuario 1</button>
+                <button onclick="testUsuario('U23256703', 'Miodemi456#')">👤 Usuario 2</button>
+                <button onclick="listarUsuarios()">📋 Listar Usuarios BD</button>
+            </div>
+        </div>
+        <div id="login-result" class="test-section info">
+            <strong>Estado:</strong> Sin probar
+        </div>
+    </div>
+
+    <!-- Test de Carrito -->
+    <div class="container">
+        <h2>2. 🛒 Test de Carrito Completo</h2>
+        <div class="grid-3">
+            <input type="text" id="carrito-usuario" placeholder="Código Usuario" value="U23201604">
+            <select id="carrito-metodo">
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+            </select>
+            <input type="text" id="carrito-direccion" placeholder="Dirección" value="Calle 123">
+        </div>
+        <button onclick="testCarritoCompleto()">🛒 Test Carrito Completo</button>
+        <button onclick="testSoloCompra()">🛍️ Test Solo Compra</button>
+        <button onclick="testSoloAlquiler()">🏠 Test Solo Alquiler</button>
+        <button onclick="crearProductosEjemplo()">🎭 Crear Productos</button>
+        <div id="carrito-result" class="test-section info">
+            <strong>Estado:</strong> Sin probar
+        </div>
+    </div>
+
+    <!-- Diagnóstico de Base de Datos -->
+    <div class="container">
+        <h2>3. 🗄️ Diagnóstico de Base de Datos</h2>
+        <button onclick="testConexionBD()">🔗 Test Conexión</button>
+        <button onclick="verificarTablas()">📋 Verificar Tablas</button>
+        <button onclick="contarRegistros()">📊 Contar Registros</button>
+        <button onclick="verificarUsuarios()">👥 Verificar Usuarios</button>
+        <div id="bd-result" class="test-section info">
+            <strong>Estado:</strong> Sin probar
+        </div>
+    </div>
+
+    <!-- Log de Actividad -->
+    <div class="container">
+        <h2>📋 Log de Actividad</h2>
+        <button onclick="limpiarLog()">🧹 Limpiar</button>
+        <div id="activity-log" class="log">Esperando pruebas...</div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        function log(mensaje, tipo = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('activity-log');
+            const tipoIcon = tipo === 'error' ? '❌' : tipo === 'success' ? '✅' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${tipoIcon} ${mensaje}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function limpiarLog() {
+            document.getElementById('activity-log').textContent = 'Log limpiado...\n';
+        }
+
+        function mostrarResultado(elementId, exito, mensaje, datos = null) {
+            const element = document.getElementById(elementId);
+            element.className = `test-section ${exito ? 'success' : 'error'}`;
+            element.innerHTML = `<strong>Estado:</strong> ${exito ? '✅ Éxito' : '❌ Error'}<br>
+                                <strong>Mensaje:</strong> ${mensaje}`;
+            
+            if (datos) {
+                element.innerHTML += `<br><strong>Datos:</strong> <pre>${JSON.stringify(datos, null, 2)}</pre>`;
+            }
+        }
+
+        // ===== TESTS DE LOGIN =====
+        
+        async function testLogin() {
+            const usuario = document.getElementById('login-usuario').value;
+            const password = document.getElementById('login-password').value;
+            
+            log(`Probando login: ${usuario}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: usuario,
+                        contrasena: password
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('login-result', true, 'Login exitoso', data);
+                    log(`✅ Login exitoso para ${usuario}`);
+                } else {
+                    mostrarResultado('login-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Login fallido: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('login-result', false, error.message);
+                log(`❌ Error de conexión: ${error.message}`);
+            }
+        }
+
+        async function testLoginBD() {
+            log('Probando login directo con BD...');
+            
+            try {
+                // Primero verificar que el usuario existe en BD
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const usuarios = data.usuarios;
+                    log(`✅ Encontrados ${usuarios.length} usuarios en BD`);
+                    
+                    // Mostrar algunos usuarios
+                    usuarios.slice(0, 3).forEach(user => {
+                        log(`👤 Usuario: ${user.codigo} - ${user.nombre} ${user.apellido}`);
+                    });
+                    
+                    mostrarResultado('login-result', true, `${usuarios.length} usuarios en BD`, usuarios.slice(0, 3));
+                } else {
+                    mostrarResultado('login-result', false, `Error BD: ${data.error}`, data);
+                    log(`❌ Error consultando BD: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('login-result', false, error.message);
+                log(`❌ Error consultando BD: ${error.message}`);
+            }
+        }
+
+        async function testUsuario(codigo, password) {
+            log(`Probando usuario específico: ${codigo}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuario: codigo,
+                        contrasena: password
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('login-result', true, `Usuario ${codigo} OK`, data);
+                    log(`✅ Usuario ${codigo} funciona correctamente`);
+                } else {
+                    mostrarResultado('login-result', false, `Usuario ${codigo}: ${data.error}`, data);
+                    log(`❌ Usuario ${codigo} falló: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('login-result', false, error.message);
+                log(`❌ Error con usuario ${codigo}: ${error.message}`);
+            }
+        }
+
+        async function listarUsuarios() {
+            log('Listando usuarios de la BD...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const usuarios = data.usuarios;
+                    log(`✅ ${usuarios.length} usuarios encontrados`);
+                    
+                    usuarios.forEach(user => {
+                        log(`👤 ${user.codigo} - ${user.nombre} ${user.apellido} (${user.correo})`);
+                    });
+                    
+                    mostrarResultado('login-result', true, `${usuarios.length} usuarios listados`, usuarios);
+                } else {
+                    mostrarResultado('login-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error listando usuarios: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('login-result', false, error.message);
+                log(`❌ Error listando usuarios: ${error.message}`);
+            }
+        }
+
+        // ===== TESTS DE CARRITO =====
+        
+        async function testCarritoCompleto() {
+            const usuario = document.getElementById('carrito-usuario').value;
+            const metodo = document.getElementById('carrito-metodo').value;
+            const direccion = document.getElementById('carrito-direccion').value;
+            
+            log('Probando carrito completo (compra + alquiler)...');
+            
+            const carritoData = {
+                usuario_codigo: usuario,
+                compras: [
+                    {
+                        producto_id: 1,
+                        cantidad: 1,
+                        notas: 'Compra de prueba'
+                    }
+                ],
+                alquileres: [
+                    {
+                        producto_id: 2,
+                        cantidad: 1,
+                        fecha_inicio: '2024-12-01',
+                        fecha_fin: '2024-12-07',
+                        deposito: 50000,
+                        notas: 'Alquiler de prueba'
+                    }
+                ],
+                metodo_pago: metodo,
+                direccion_envio: direccion,
+                notas_generales: 'Test completo de carrito'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/procesar-carrito`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(carritoData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('carrito-result', true, 'Carrito procesado exitosamente', data);
+                    log(`✅ Carrito procesado: Total ${data.total_general}`);
+                } else {
+                    mostrarResultado('carrito-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error en carrito: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('carrito-result', false, error.message);
+                log(`❌ Error de conexión carrito: ${error.message}`);
+            }
+        }
+
+        async function testSoloCompra() {
+            const usuario = document.getElementById('carrito-usuario').value;
+            
+            log('Probando solo compra...');
+            
+            const compraData = {
+                usuario_codigo: usuario,
+                producto_id: 1,
+                cantidad: 1,
+                metodo_pago: 'efectivo',
+                direccion_envio: 'Dirección de prueba',
+                notas: 'Compra individual de prueba'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/compras`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(compraData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('carrito-result', true, 'Compra procesada exitosamente', data);
+                    log(`✅ Compra procesada: ${data.producto} - ${data.precio_total}`);
+                } else {
+                    mostrarResultado('carrito-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error en compra: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('carrito-result', false, error.message);
+                log(`❌ Error de conexión compra: ${error.message}`);
+            }
+        }
+
+        async function testSoloAlquiler() {
+            const usuario = document.getElementById('carrito-usuario').value;
+            
+            log('Probando solo alquiler...');
+            
+            const alquilerData = {
+                usuario_codigo: usuario,
+                producto_id: 1,
+                cantidad: 1,
+                fecha_inicio: '2024-12-01',
+                fecha_fin: '2024-12-07',
+                metodo_pago: 'efectivo',
+                direccion_entrega: 'Dirección de prueba',
+                deposito: 50000,
+                notas: 'Alquiler individual de prueba'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/alquileres`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(alquilerData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('carrito-result', true, 'Alquiler procesado exitosamente', data);
+                    log(`✅ Alquiler procesado: ${data.producto} - ${data.precio_total}`);
+                } else {
+                    mostrarResultado('carrito-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error en alquiler: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('carrito-result', false, error.message);
+                log(`❌ Error de conexión alquiler: ${error.message}`);
+            }
+        }
+
+        async function crearProductosEjemplo() {
+            log('Creando productos de ejemplo...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/debug/crear-productos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('carrito-result', true, 'Productos creados', data);
+                    log(`✅ ${data.productos_creados} productos creados`);
+                } else {
+                    mostrarResultado('carrito-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error creando productos: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('carrito-result', false, error.message);
+                log(`❌ Error creando productos: ${error.message}`);
+            }
+        }
+
+        // ===== TESTS DE BASE DE DATOS =====
+        
+        async function testConexionBD() {
+            log('Probando conexión a BD...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/test-db`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('bd-result', true, 'BD conectada correctamente', data);
+                    log(`✅ BD conectada: ${data.totalUsuarios} usuarios`);
+                } else {
+                    mostrarResultado('bd-result', false, `Error BD: ${data.error}`, data);
+                    log(`❌ Error BD: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('bd-result', false, error.message);
+                log(`❌ Error conexión BD: ${error.message}`);
+            }
+        }
+
+        async function verificarTablas() {
+            log('Verificando tablas de BD...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/test-db`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('bd-result', true, 'Tablas verificadas', data);
+                    log(`✅ Tabla usuarios: ${data.tablaUsuarios}`);
+                    log(`✅ Total usuarios: ${data.totalUsuarios}`);
+                } else {
+                    mostrarResultado('bd-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error verificando tablas: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('bd-result', false, error.message);
+                log(`❌ Error verificando tablas: ${error.message}`);
+            }
+        }
+
+        async function contarRegistros() {
+            log('Contando registros...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const stats = data.stats;
+                    mostrarResultado('bd-result', true, 'Registros contados', stats);
+                    log(`✅ Total usuarios: ${stats.total}`);
+                    log(`✅ Usuarios hoy: ${stats.hoy}`);
+                    log(`✅ Usuarios esta semana: ${stats.semana}`);
+                } else {
+                    mostrarResultado('bd-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error contando registros: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('bd-result', false, error.message);
+                log(`❌ Error contando registros: ${error.message}`);
+            }
+        }
+
+        async function verificarUsuarios() {
+            log('Verificando usuarios específicos...');
+            
+            const usuariosTest = ['U23201604', 'U23256703'];
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/usuarios-tech`, {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const usuarios = data.usuarios;
+                    const encontrados = [];
+                    
+                    usuariosTest.forEach(codigo => {
+                        const usuario = usuarios.find(u => u.codigo === codigo);
+                        if (usuario) {
+                            encontrados.push(usuario);
+                            log(`✅ Usuario ${codigo} encontrado: ${usuario.nombre} ${usuario.apellido}`);
+                        } else {
+                            log(`❌ Usuario ${codigo} NO encontrado`);
+                        }
+                    });
+                    
+                    mostrarResultado('bd-result', true, `${encontrados.length}/${usuariosTest.length} usuarios verificados`, encontrados);
+                } else {
+                    mostrarResultado('bd-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error verificando usuarios: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('bd-result', false, error.message);
+                log(`❌ Error verificando usuarios: ${error.message}`);
+            }
+        }
+
+        // Auto-ejecutar tests básicos al cargar
+        window.onload = function() {
+            log('🚀 Página de diagnóstico cargada');
+            setTimeout(() => {
+                testConexionBD();
+                verificarUsuarios();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

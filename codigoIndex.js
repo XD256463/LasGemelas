@@ -183,15 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginButton.textContent = '✨ Iniciar Sesión ✨';
             }
         }
-            
-        } else {
-            console.log('❌ Credenciales incorrectas');
-            if (errorMessage) {
-                errorMessage.className = 'alert error';
-                errorMessage.textContent = '❌ Código de usuario o contraseña incorrectos.';
-                errorMessage.style.display = 'block';
-            }
-        }
     });
     
     console.log('🎯 Event listener del login configurado');

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Error Servidor - Las Gemelas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Diagnóstico Error Servidor - Las Gemelas</h1>
+        <p>Esta página te ayudará a diagnosticar los problemas de registro y login.</p>
+    </div>
+
+    <!-- Test de Conexión -->
+    <div class="container">
+        <h2>1. Test de Conexión al Servidor</h2>
+        <button onclick="testConexion()">🔗 Probar Conexión</button>
+        <div id="conexion-result" class="test-section info">
+            <strong>Estado:</strong> Sin probar
+        </div>
+    </div>
+
+    <!-- Test de Base de Datos -->
+    <div class="container">
+        <h2>2. Test de Base de Datos</h2>
+        <button onclick="testBaseDatos()">🗄️ Probar Base de Datos</button>
+        <div id="bd-result" class="test-section info">
+            <strong>Estado:</strong> Sin probar
+        </div>
+    </div>
+
+    <!-- Test de Registro -->
+    <div class="container">
+        <h2>3. Test de Registro</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input type="text" id="reg-codigo" placeholder="Código (ej: U12345678)" value="U99999999">
+            <input type="text" id="reg-nombre" placeholder="Nombre" value="Test">
+            <input type="text" id="reg-apellido" placeholder="Apellido" value="Usuario">
+            <input type="email" id="reg-correo" placeholder="Correo" value="test@test.com">
+            <input type="password" id="reg-contrasena" placeholder="Contraseña" value="Test123@">
+            <input type="text" id="reg-telefono" placeholder="Teléfono (opcional)" value="123456789">
+        </div>
+        <button onclick="testRegistro()">📝 Probar Registro</button>
+        <div id="registro-result" class="test-section info">
+            <strong>Estado:</strong> Sin probar
+        </div>
+    </div>
+
+    <!-- Test de Login -->
+    <div class="container">
+        <h2>4. Test de Login</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input type="text" id="login-usuario" placeholder="Código o Correo" value="U23201604">
+            <input type="password" id="login-contrasena" placeholder="Contraseña" value="Usuario123@">
+        </div>
+        <button onclick="testLogin()">🔐 Probar Login</button>
+        <button onclick="testLoginCorreo()">📧 Probar Login con Correo</button>
+        <div id="login-result" class="test-section info">
+            <strong>Estado:</strong> Sin probar
+        </div>
+    </div>
+
+    <!-- Test con Usuario Existente -->
+    <div class="container">
+        <h2>5. Test con Usuarios Conocidos</h2>
+        <button onclick="testUsuarioExistente('U23201604', 'Usuario123@')">👤 Test Usuario 1</button>
+        <button onclick="testUsuarioExistente('U23256703', 'Miodemi456#')">👤 Test Usuario 2</button>
+        <div id="usuario-existente-result" class="test-section info">
+            <strong>Estado:</strong> Sin probar
+        </div>
+    </div>
+
+    <!-- Log de Errores -->
+    <div class="container">
+        <h2>📋 Log de Errores Detallado</h2>
+        <button onclick="limpiarLog()">🧹 Limpiar Log</button>
+        <div id="error-log" class="log">Esperando pruebas...</div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        function log(mensaje, tipo = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('error-log');
+            const tipoIcon = tipo === 'error' ? '❌' : tipo === 'success' ? '✅' : 'ℹ️';
+            logElement.textContent += `[${timestamp}] ${tipoIcon} ${mensaje}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function limpiarLog() {
+            document.getElementById('error-log').textContent = 'Log limpiado...\n';
+        }
+
+        function mostrarResultado(elementId, exito, mensaje, datos = null) {
+            const element = document.getElementById(elementId);
+            element.className = `test-section ${exito ? 'success' : 'error'}`;
+            element.innerHTML = `<strong>Estado:</strong> ${exito ? '✅ Éxito' : '❌ Error'}<br>
+                                <strong>Mensaje:</strong> ${mensaje}`;
+            
+            if (datos) {
+                element.innerHTML += `<br><strong>Datos:</strong> <pre>${JSON.stringify(datos, null, 2)}</pre>`;
+            }
+        }
+
+        async function testConexion() {
+            log('Probando conexión al servidor...');
+            try {
+                const response = await fetch(`${API_BASE}/api/routes`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('conexion-result', true, 'Servidor conectado correctamente', data);
+                    log('✅ Conexión al servidor exitosa');
+                } else {
+                    mostrarResultado('conexion-result', false, `Error HTTP ${response.status}`, data);
+                    log(`❌ Error de conexión: ${response.status}`);
+                }
+            } catch (error) {
+                mostrarResultado('conexion-result', false, error.message);
+                log(`❌ Error de conexión: ${error.message}`);
+            }
+        }
+
+        async function testBaseDatos() {
+            log('Probando conexión a la base de datos...');
+            try {
+                const response = await fetch(`${API_BASE}/api/test-db`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('bd-result', true, 'Base de datos conectada', data);
+                    log('✅ Base de datos conectada correctamente');
+                } else {
+                    mostrarResultado('bd-result', false, `Error en BD: ${data.error}`, data);
+                    log(`❌ Error de base de datos: ${data.error}`);
+                }
+            } catch (error) {
+                mostrarResultado('bd-result', false, error.message);
+                log(`❌ Error probando BD: ${error.message}`);
+            }
+        }
+
+        async function testRegistro() {
+            const datos = {
+                codigo: document.getElementById('reg-codigo').value,
+                nombre: document.getElementById('reg-nombre').value,
+                apellido: document.getElementById('reg-apellido').value,
+                correo: document.getElementById('reg-correo').value,
+                contrasena: document.getElementById('reg-contrasena').value,
+                telefono: document.getElementById('reg-telefono').value
+            };
+
+            log(`Probando registro con código: ${datos.codigo}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/registro`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('registro-result', true, 'Registro exitoso', data);
+                    log(`✅ Registro exitoso para ${datos.codigo}`);
+                } else {
+                    mostrarResultado('registro-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error en registro: ${data.error} (HTTP ${response.status})`);
+                }
+            } catch (error) {
+                mostrarResultado('registro-result', false, error.message);
+                log(`❌ Error de red en registro: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            const usuario = document.getElementById('login-usuario').value;
+            const contrasena = document.getElementById('login-contrasena').value;
+
+            log(`Probando login con: ${usuario}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        usuario: usuario,
+                        contrasena: contrasena
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('login-result', true, 'Login exitoso', data);
+                    log(`✅ Login exitoso para ${usuario}`);
+                } else {
+                    mostrarResultado('login-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error en login: ${data.error} (HTTP ${response.status})`);
+                }
+            } catch (error) {
+                mostrarResultado('login-result', false, error.message);
+                log(`❌ Error de red en login: ${error.message}`);
+            }
+        }
+
+        async function testLoginCorreo() {
+            // Buscar el correo del usuario U23201604 primero
+            log('Probando login con correo...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        correo: 'usuario1@test.com', // Correo de prueba
+                        contrasena: 'Usuario123@'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('login-result', true, 'Login con correo exitoso', data);
+                    log('✅ Login con correo exitoso');
+                } else {
+                    mostrarResultado('login-result', false, `Error: ${data.error}`, data);
+                    log(`❌ Error en login con correo: ${data.error} (HTTP ${response.status})`);
+                }
+            } catch (error) {
+                mostrarResultado('login-result', false, error.message);
+                log(`❌ Error de red en login con correo: ${error.message}`);
+            }
+        }
+
+        async function testUsuarioExistente(codigo, contrasena) {
+            log(`Probando usuario existente: ${codigo}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        usuario: codigo,
+                        contrasena: contrasena
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    mostrarResultado('usuario-existente-result', true, `Login exitoso para ${codigo}`, data);
+                    log(`✅ Usuario existente ${codigo} funciona correctamente`);
+                } else {
+                    mostrarResultado('usuario-existente-result', false, `Error con ${codigo}: ${data.error}`, data);
+                    log(`❌ Error con usuario existente ${codigo}: ${data.error} (HTTP ${response.status})`);
+                }
+            } catch (error) {
+                mostrarResultado('usuario-existente-result', false, error.message);
+                log(`❌ Error de red con usuario existente: ${error.message}`);
+            }
+        }
+
+        // Auto-ejecutar test de conexión al cargar
+        window.onload = function() {
+            log('🚀 Página de diagnóstico cargada');
+            testConexion();
+        };
+    </script>
+</body>
+</html>

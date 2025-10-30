@@ -199,6 +199,7 @@ app.post('/api/registro', async (req, res) => {
         connection.release();
         
         console.log('✅ Usuario registrado con ID:', result.insertId);
+        console.log('📊 Datos del usuario creado:', { codigo, nombre, apellido, correo });
         
         res.status(201).json({
             success: true,
@@ -208,11 +209,31 @@ app.post('/api/registro', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Error en registro:', error);
-        res.status(500).json({ 
-            error: 'Error interno del servidor',
-            details: error.message 
+        console.error('❌ Error detallado en registro:', {
+            message: error.message,
+            code: error.code,
+            errno: error.errno,
+            sqlState: error.sqlState,
+            sqlMessage: error.sqlMessage,
+            stack: error.stack
         });
+        
+        // Enviar error más específico según el tipo
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: 'El código o correo ya está registrado' });
+        } else if (error.code === 'ECONNREFUSED') {
+            return res.status(500).json({ error: 'No se puede conectar a la base de datos' });
+        } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+            return res.status(500).json({ error: 'Error de autenticación con la base de datos' });
+        } else if (error.code === 'ER_NO_SUCH_TABLE') {
+            return res.status(500).json({ error: 'Tabla de usuarios no existe' });
+        } else {
+            return res.status(500).json({ 
+                error: 'Error interno del servidor',
+                details: process.env.NODE_ENV === 'development' ? error.message : 'Error de base de datos',
+                code: error.code
+            });
+        }
     }
 });
 
@@ -943,11 +964,24 @@ app.post('/api/login', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Error en login:', error);
-        res.status(500).json({ 
-            error: 'Error interno del servidor',
-            details: error.message 
+        console.error('❌ Error detallado en login:', {
+            message: error.message,
+            code: error.code,
+            errno: error.errno,
+            stack: error.stack
         });
+        
+        if (error.code === 'ECONNREFUSED') {
+            return res.status(500).json({ error: 'No se puede conectar a la base de datos' });
+        } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+            return res.status(500).json({ error: 'Error de autenticación con la base de datos' });
+        } else {
+            return res.status(500).json({ 
+                error: 'Error interno del servidor',
+                details: process.env.NODE_ENV === 'development' ? error.message : 'Error de autenticación',
+                code: error.code
+            });
+        }
     }
 });
 

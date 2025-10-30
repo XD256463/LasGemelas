@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Conexión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>🔧 Debug Conexión y Endpoints</h2>
+        
+        <!-- Test Conexión BD -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>1. Test Conexión Base de Datos</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-primary" onclick="testConexion()">Probar Conexión</button>
+                <div id="conexion-result" class="mt-2"></div>
+            </div>
+        </div>
+        
+        <!-- Test Estructura de Tabla -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>2. Test Estructura de Tabla</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-info" onclick="testTabla()">Verificar Tabla Usuarios</button>
+                <div id="tabla-result" class="mt-2"></div>
+            </div>
+        </div>
+        
+        <!-- Test Registro -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>3. Test Registro</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-success" onclick="testRegistroDebug()">Probar Registro</button>
+                <div id="registro-result" class="mt-2"></div>
+            </div>
+        </div>
+        
+        <!-- Test Login -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>4. Test Login</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" id="login-usuario" class="form-control" placeholder="Código o correo">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="password" id="login-password" class="form-control" placeholder="Contraseña">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-warning w-100" onclick="testLoginDebug()">Login</button>
+                    </div>
+                </div>
+                <div id="login-result" class="mt-2"></div>
+            </div>
+        </div>
+        
+        <!-- Logs del Servidor -->
+        <div class="card">
+            <div class="card-header">
+                <h5>5. Información del Sistema</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-secondary" onclick="testSistema()">Info Sistema</button>
+                <div id="sistema-result" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testConexion() {
+            const result = document.getElementById('conexion-result');
+            result.innerHTML = '<div class="alert alert-info">Probando conexión...</div>';
+            
+            try {
+                const response = await fetch('/api/test-db');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Conexión Exitosa</h6>
+                            <p><strong>Host:</strong> ${data.host}</p>
+                            <p><strong>Base de datos:</strong> ${data.database}</p>
+                            <p><strong>Tabla usuarios:</strong> ${data.tablaUsuarios}</p>
+                            <p><strong>Total usuarios:</strong> ${data.totalUsuarios}</p>
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>❌ Error de Conexión</h6>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                            <p><strong>Detalles:</strong> ${data.details}</p>
+                            <p><strong>Código:</strong> ${data.code}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>❌ Error de Red</h6>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testTabla() {
+            const result = document.getElementById('tabla-result');
+            result.innerHTML = '<div class="alert alert-info">Verificando tabla...</div>';
+            
+            try {
+                const response = await fetch('/api/usuarios-tech?techCode=TECH_001', {
+                    headers: { 'x-tech-code': 'TECH_001' }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Tabla Usuarios OK</h6>
+                            <p><strong>Total usuarios:</strong> ${data.stats.total}</p>
+                            <p><strong>Usuarios encontrados:</strong> ${data.usuarios.length}</p>
+                            ${data.usuarios.length > 0 ? `
+                                <p><strong>Ejemplo:</strong> ${data.usuarios[0].codigo} - ${data.usuarios[0].nombre} ${data.usuarios[0].apellido}</p>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>❌ Error en Tabla</h6>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>❌ Error de Red</h6>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testRegistroDebug() {
+            const result = document.getElementById('registro-result');
+            result.innerHTML = '<div class="alert alert-info">Probando registro...</div>';
+            
+            const timestamp = Date.now();
+            const userData = {
+                codigo: `U${timestamp}`,
+                nombre: 'Debug',
+                apellido: 'Test',
+                correo: `debug${timestamp}@test.com`,
+                contrasena: 'Debug123@',
+                telefono: '123456789',
+                direccion: 'Dirección debug'
+            };
+            
+            console.log('Enviando datos de registro:', userData);
+            
+            try {
+                const response = await fetch('/api/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                console.log('Respuesta del servidor:', data);
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Registro Exitoso</h6>
+                            <p><strong>ID:</strong> ${data.userId}</p>
+                            <p><strong>Código:</strong> ${data.codigo}</p>
+                            <p><strong>Mensaje:</strong> ${data.message}</p>
+                        </div>
+                    `;
+                    
+                    // Auto-llenar campos de login
+                    document.getElementById('login-usuario').value = userData.codigo;
+                    document.getElementById('login-password').value = userData.contrasena;
+                    
+                } else {
+                    result.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>❌ Error en Registro</h6>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                            <p><strong>Detalles:</strong> ${data.details}</p>
+                            <p><strong>Código:</strong> ${data.code}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>❌ Error de Red</h6>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testLoginDebug() {
+            const usuario = document.getElementById('login-usuario').value.trim();
+            const contrasena = document.getElementById('login-password').value;
+            const result = document.getElementById('login-result');
+            
+            if (!usuario || !contrasena) {
+                result.innerHTML = '<div class="alert alert-warning">Completa usuario y contraseña</div>';
+                return;
+            }
+            
+            result.innerHTML = '<div class="alert alert-info">Probando login...</div>';
+            
+            const loginData = {
+                usuario: usuario,
+                contrasena: contrasena
+            };
+            
+            console.log('Enviando datos de login:', loginData);
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loginData)
+                });
+                
+                const data = await response.json();
+                console.log('Respuesta del login:', data);
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Login Exitoso</h6>
+                            <p><strong>Usuario:</strong> ${data.usuario.nombre} ${data.usuario.apellido}</p>
+                            <p><strong>Código:</strong> ${data.usuario.codigo}</p>
+                            <p><strong>Correo:</strong> ${data.usuario.correo}</p>
+                            <p><strong>Rol:</strong> ${data.usuario.rol}</p>
+                            <p><strong>Token generado:</strong> ${data.token ? 'Sí' : 'No'}</p>
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>❌ Error en Login</h6>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                            <p><strong>Detalles:</strong> ${data.details}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>❌ Error de Red</h6>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testSistema() {
+            const result = document.getElementById('sistema-result');
+            result.innerHTML = '<div class="alert alert-info">Obteniendo información...</div>';
+            
+            try {
+                const response = await fetch('/api/routes');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    let html = '<div class="alert alert-info"><h6>📋 Información del Sistema</h6>';
+                    html += '<p><strong>Rutas disponibles:</strong></p><ul>';
+                    
+                    Object.keys(data.routes).forEach(category => {
+                        html += `<li><strong>${category}:</strong><ul>`;
+                        data.routes[category].forEach(route => {
+                            html += `<li><code>${route}</code></li>`;
+                        });
+                        html += '</ul></li>';
+                    });
+                    
+                    html += '</ul>';
+                    html += `<p><strong>Códigos técnico:</strong> ${data.codigosTecnico.join(', ')}</p>`;
+                    html += '</div>';
+                    
+                    result.innerHTML = html;
+                } else {
+                    result.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-ejecutar tests básicos
+        window.onload = function() {
+            setTimeout(testConexion, 500);
+            setTimeout(testSistema, 1500);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simple Técnico</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>Test Simple de Códigos de Técnico</h1>
+    
+    <div>
+        <input type="text" id="techCode" placeholder="Ingresa código (ej: TECH_001)" style="padding: 8px; width: 200px;">
+        <button onclick="testCode()" style="padding: 8px 15px;">Probar</button>
+        <button onclick="listCodes()" style="padding: 8px 15px;">Ver Disponibles</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testCode() {
+            const code = document.getElementById('techCode').value.trim();
+            const resultsDiv = document.getElementById('results');
+            
+            if (!code) {
+                resultsDiv.innerHTML = '<div class="result error">Por favor ingresa un código</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="result info">Probando código: ' + code + '</div>';
+            
+            try {
+                // Probar con diferentes métodos de envío del header
+                const tests = [
+                    { name: 'techCode', headers: { 'techCode': code } },
+                    { name: 'techcode', headers: { 'techcode': code } },
+                    { name: 'tech-code', headers: { 'tech-code': code } }
+                ];
+                
+                let results = '<div class="result info">Probando código: <strong>' + code + '</strong></div>';
+                
+                for (const test of tests) {
+                    try {
+                        const response = await fetch('/api/tech/test', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...test.headers
+                            }
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok) {
+                            results += `<div class="result success">✅ ${test.name}: ÉXITO - ${result.message}</div>`;
+                            break;
+                        } else {
+                            results += `<div class="result error">❌ ${test.name}: ${result.error}</div>`;
+                        }
+                    } catch (error) {
+                        results += `<div class="result error">❌ ${test.name}: Error de conexión - ${error.message}</div>`;
+                    }
+                }
+                
+                resultsDiv.innerHTML = results;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="result error">Error general: ' + error.message + '</div>';
+            }
+        }
+        
+        async function listCodes() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="result info">Obteniendo códigos disponibles...</div>';
+            
+            try {
+                const response = await fetch('/api/debug/tecnicos');
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    let html = '<div class="result success"><h3>Códigos Disponibles:</h3><ul>';
+                    result.data.forEach(tech => {
+                        html += `<li><strong>${tech.codigo}</strong> - ${tech.nombre} (${tech.email}) - ${tech.activo ? 'Activo' : 'Inactivo'}</li>`;
+                    });
+                    html += '</ul></div>';
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<div class="result error">Error obteniendo códigos: ' + (result.error || 'Error desconocido') + '</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="result error">Error de conexión: ' + error.message + '</div>';
+            }
+        }
+        
+        // Auto-cargar códigos al iniciar
+        window.onload = function() {
+            listCodes();
+        };
+        
+        // Permitir Enter para probar
+        document.getElementById('techCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testCode();
+            }
+        });
+    </script>
+</body>
+</html>

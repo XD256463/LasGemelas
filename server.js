@@ -13,6 +13,16 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
+// Endpoint básico para verificar códigos de técnico
+app.get('/api/tech-status', (req, res) => {
+    res.json({
+        status: 'OK',
+        message: 'Funcionalidad de técnicos activa',
+        codigosDisponibles: Object.keys(TECH_CODES),
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());

@@ -29,6 +29,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Debug: Verificar todos los elementos del formulario
+    console.log('=== DEBUG ELEMENTOS ===');
+    console.log('Elementos del formulario encontrados:');
+    console.log('- codeInput:', !!codeInput, codeInput?.id);
+    console.log('- nameInput:', !!nameInput, nameInput?.id);
+    console.log('- lastNameInput:', !!lastNameInput, lastNameInput?.id);
+    console.log('- emailInput:', !!emailInput, emailInput?.id);
+    console.log('- phoneInput:', !!phoneInput, phoneInput?.id);
+    console.log('- addressInput:', !!addressInput, addressInput?.id);
+    console.log('- passwordInput:', !!passwordInput, passwordInput?.id);
+
     console.log('Todos los elementos encontrados correctamente:', {
         passwordInput: !!passwordInput,
         toggleIcon: !!toggleIcon,
@@ -331,6 +342,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const phone = phoneInput.value.trim();
         const address = addressInput.value.trim();
         const password = passwordInput.value;
+
+        console.log('=== DEBUG FORMULARIO ===');
+        console.log('Elementos encontrados:');
+        console.log('- codeInput:', !!codeInput, codeInput?.id);
+        console.log('- nameInput:', !!nameInput, nameInput?.id);
+        console.log('- lastNameInput:', !!lastNameInput, lastNameInput?.id);
+        console.log('- emailInput:', !!emailInput, emailInput?.id);
+        console.log('- passwordInput:', !!passwordInput, passwordInput?.id);
+        
+        console.log('Valores capturados:');
+        console.log('- code:', code, typeof code);
+        console.log('- name:', name, typeof name);
+        console.log('- lastName:', lastName, typeof lastName);
+        console.log('- email:', email, typeof email);
+        console.log('- password:', password ? '[OCULTA]' : 'VACÍA', typeof password);
 
         if (!validateCode()) {
             messageElement.textContent = '❌ El código debe comenzar con "U" seguido de números.';

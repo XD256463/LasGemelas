@@ -129,15 +129,36 @@ const verifyToken = (req, res, next) => {
 // Rutas de autenticación
 app.post('/api/registro', async (req, res) => {
     try {
-        console.log('Datos recibidos para registro:', req.body);
+        console.log('=== REGISTRO DEBUG ===');
+        console.log('Headers:', req.headers);
+        console.log('Body completo:', JSON.stringify(req.body, null, 2));
+        console.log('Tipo de body:', typeof req.body);
+        console.log('Keys del body:', Object.keys(req.body));
         
         const { codigo, nombre, apellido, correo, contrasena, telefono, direccion } = req.body;
+        
+        console.log('Valores extraídos:');
+        console.log('- codigo:', codigo, typeof codigo);
+        console.log('- nombre:', nombre, typeof nombre);
+        console.log('- apellido:', apellido, typeof apellido);
+        console.log('- correo:', correo, typeof correo);
+        console.log('- contrasena:', contrasena, typeof contrasena);
 
         // Validar datos requeridos
         if (!codigo || !nombre || !apellido || !correo || !contrasena) {
-            console.log('Datos faltantes:', { codigo: !!codigo, nombre: !!nombre, apellido: !!apellido, correo: !!correo, contrasena: !!contrasena });
+            console.log('Datos faltantes:', { 
+                codigo: !!codigo, 
+                nombre: !!nombre, 
+                apellido: !!apellido, 
+                correo: !!correo, 
+                contrasena: !!contrasena 
+            });
             return res.status(400).json({ 
-                error: 'Código, nombre, apellido, correo y contraseña son requeridos' 
+                error: 'Código, nombre, apellido, correo y contraseña son requeridos',
+                debug: {
+                    recibido: req.body,
+                    campos: { codigo, nombre, apellido, correo, contrasena }
+                }
             });
         }
 
